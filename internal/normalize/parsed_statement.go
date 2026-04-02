@@ -36,6 +36,8 @@ func ParsedStatement(parsed *internalparser.ParsedStatement) (ir.Statement, erro
 		return normalizeTiDBSelect(parsed.SQL, node)
 	case *tidbast.SetOprStmt:
 		return normalizeTiDBRawComposable(parsed.SQL)
+	case *tidbast.SetStmt:
+		return normalizeTiDBSet(node)
 	case *tidbast.ExplainStmt:
 		return normalizeTiDBRawComposable(parsed.SQL)
 	case *tidbast.ShowStmt:

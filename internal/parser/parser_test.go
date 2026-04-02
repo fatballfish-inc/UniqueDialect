@@ -59,6 +59,54 @@ func TestParseOneClassifiesSetOperationAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesSetNamesAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET NAMES utf8mb4",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesSetCharacterSetAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET CHARACTER SET utf8",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesGenericSetAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET autocommit = 1",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneSupportsMariaDBDropForeignKeyIfExistsExtension(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"ALTER TABLE `users` DROP FOREIGN KEY IF EXISTS `fk_users_org_id`",

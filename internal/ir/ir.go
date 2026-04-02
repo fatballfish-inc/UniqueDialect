@@ -58,6 +58,14 @@ type DeleteStatement struct {
 
 func (DeleteStatement) statementNode() {}
 
+// SetStatement is the normalized safe subset of SET statements.
+type SetStatement struct {
+	Kind    string
+	Charset string
+}
+
+func (SetStatement) statementNode() {}
+
 // UseStatement is the normalized USE/current-schema statement.
 type UseStatement struct {
 	Database string

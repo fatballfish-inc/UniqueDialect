@@ -13,6 +13,7 @@ const (
 	StatementKindRollback       StatementKind = "rollback"
 	StatementKindWith           StatementKind = "with"
 	StatementKindSetOp          StatementKind = "set_op"
+	StatementKindSet            StatementKind = "set"
 	StatementKindCreateTable    StatementKind = "create_table"
 	StatementKindCreateDatabase StatementKind = "create_database"
 	StatementKindCreateView     StatementKind = "create_view"

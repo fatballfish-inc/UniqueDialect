@@ -2,6 +2,7 @@ package uniquedialect_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -718,6 +719,156 @@ func TestTranslatorTranslatesMySQLUseToPostgresViaParserHooks(t *testing.T) {
 	want := `SET search_path TO "appdb"`
 	if result.SQL != want {
 		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLSetNamesToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET NAMES utf8mb4")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if result.SQL != "SET client_encoding TO 'UTF8'" {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, "SET client_encoding TO 'UTF8'")
+	}
+}
+
+func TestTranslatorTranslatesMySQLSetCharacterSetToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET CHARACTER SET utf8")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if result.SQL != "SET client_encoding TO 'UTF8'" {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, "SET client_encoding TO 'UTF8'")
+	}
+}
+
+func TestTranslatorRejectsUnsupportedMySQLSetNamesCharsetToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SET NAMES latin1")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want unsupported SET charset error")
+	}
+	if !strings.Contains(err.Error(), "unsupported SET charset") {
+		t.Fatalf("Translate() error = %v, want unsupported SET charset error", err)
+	}
+}
+
+func TestTranslatorRejectsUnsupportedMySQLSetNamesCollateToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want unsupported SET variant error")
+	}
+	if !strings.Contains(err.Error(), "unsupported SET variant") {
+		t.Fatalf("Translate() error = %v, want unsupported SET variant error", err)
+	}
+}
+
+func TestTranslatorRejectsMySQLSetNamesToSQLiteViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectSQLite,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SET NAMES utf8mb4")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want unsupported SET target dialect error")
+	}
+	if !strings.Contains(err.Error(), "unsupported SET target dialect sqlite") {
+		t.Fatalf("Translate() error = %v, want unsupported SET target dialect sqlite", err)
+	}
+}
+
+func TestTranslatorRejectsMySQLSetNamesToOracleViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectOracle,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SET NAMES utf8mb4")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want unsupported SET target dialect error")
+	}
+	if !strings.Contains(err.Error(), "unsupported SET target dialect oracle") {
+		t.Fatalf("Translate() error = %v, want unsupported SET target dialect oracle", err)
+	}
+}
+
+func TestTranslatorBlocksGenericMySQLSetToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SET autocommit = 1")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want parser adaptation error")
+	}
+
+	var adaptationErr *uniquedialect.ParserAdaptationError
+	if !errors.As(err, &adaptationErr) {
+		t.Fatalf("Translate() error = %T, want *ParserAdaptationError", err)
+	}
+	if adaptationErr.StatementKind != "set" {
+		t.Fatalf("ParserAdaptationError.StatementKind = %q, want %q", adaptationErr.StatementKind, "set")
+	}
+	if adaptationErr.Status != "recognized_unadapted" {
+		t.Fatalf("ParserAdaptationError.Status = %q, want %q", adaptationErr.Status, "recognized_unadapted")
 	}
 }
 

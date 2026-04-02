@@ -19,6 +19,8 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 		return StatementKindSelect, SupportStatusSupported
 	case *tidbast.SetOprStmt:
 		return StatementKindSetOp, SupportStatusSupported
+	case *tidbast.SetStmt:
+		return classifyTiDBSetStatement(value)
 	case *tidbast.InsertStmt:
 		return StatementKindInsert, SupportStatusSupported
 	case *tidbast.UpdateStmt:
@@ -68,5 +70,18 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 		return StatementKindUse, SupportStatusSupported
 	default:
 		return StatementKindOther, SupportStatusUnsupported
+	}
+}
+
+func classifyTiDBSetStatement(stmt *tidbast.SetStmt) (StatementKind, SupportStatus) {
+	if stmt == nil || len(stmt.Variables) != 1 || stmt.Variables[0] == nil {
+		return StatementKindSet, SupportStatusRecognizedUnadapted
+	}
+
+	switch stmt.Variables[0].Name {
+	case tidbast.SetNames, tidbast.SetCharset:
+		return StatementKindSet, SupportStatusSupported
+	default:
+		return StatementKindSet, SupportStatusRecognizedUnadapted
 	}
 }

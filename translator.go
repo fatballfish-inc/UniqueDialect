@@ -92,7 +92,7 @@ func (t *Translator) translateSQL(sql string) (string, error) {
 		if normalizeErr == nil {
 			return render.Statement(normalized, string(t.opts.InputDialect), string(t.opts.TargetDialect))
 		}
-		if parsed.Kind == internalparser.StatementKindShow && parsed.Status == internalparser.SupportStatusSupported {
+		if (parsed.Kind == internalparser.StatementKindShow || parsed.Kind == internalparser.StatementKindSet) && parsed.Status == internalparser.SupportStatusSupported {
 			return "", normalizeErr
 		}
 		if shouldBlockRecognizedUnadapted(parsed.Kind, parsed.Status) {
@@ -119,7 +119,7 @@ func shouldBlockRecognizedUnadapted(kind internalparser.StatementKind, status in
 		return false
 	}
 	switch kind {
-	case internalparser.StatementKindWith, internalparser.StatementKindSetOp, internalparser.StatementKindShow:
+	case internalparser.StatementKindWith, internalparser.StatementKindSetOp, internalparser.StatementKindSet, internalparser.StatementKindShow:
 		return true
 	default:
 		return false

@@ -58,6 +58,8 @@ func renderStatement(stmt ir.Statement, from, to string, renderState *state) (st
 		return renderUpdate(value, from, to, renderState), nil
 	case ir.DeleteStatement:
 		return renderDelete(value, from, to, renderState), nil
+	case ir.SetStatement:
+		return renderSet(value, to)
 	case ir.UseStatement:
 		return renderUse(value, to), nil
 	case ir.ShowTablesStatement:
@@ -182,6 +184,29 @@ func renderDelete(stmt ir.DeleteStatement, from, to string, st *state) string {
 		builder.WriteString(rewriteRaw(stmt.Where, from, to, st))
 	}
 	return builder.String()
+}
+
+func renderSet(stmt ir.SetStatement, to string) (string, error) {
+	switch to {
+	case "postgres":
+		return "SET client_encoding TO " + quoteStringLiteral(renderPostgresClientEncoding(stmt.Charset)), nil
+	case "mysql":
+		if stmt.Kind == "charset" {
+			return "SET CHARACTER SET " + stmt.Charset, nil
+		}
+		return "SET NAMES " + stmt.Charset, nil
+	default:
+		return "", fmt.Errorf("unsupported SET target dialect %s", to)
+	}
+}
+
+func renderPostgresClientEncoding(charset string) string {
+	switch strings.ToLower(strings.TrimSpace(charset)) {
+	case "utf8", "utf8mb4":
+		return "UTF8"
+	default:
+		return charset
+	}
 }
 
 func renderUse(stmt ir.UseStatement, to string) string {
