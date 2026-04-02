@@ -406,6 +406,22 @@ func TestParseOneClassifiesShowTablesAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowFullTablesAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW FULL TABLES",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowCreateViewAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW CREATE VIEW `active_users`",
@@ -425,6 +441,38 @@ func TestParseOneClassifiesShowCreateViewAsSupported(t *testing.T) {
 func TestParseOneClassifiesShowVariablesAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW VARIABLES",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowTablesLikeAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW TABLES LIKE 'user%'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowDatabasesLikeAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW DATABASES LIKE 'app%'",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {

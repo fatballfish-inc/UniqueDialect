@@ -15,10 +15,18 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 
 	switch stmt.Tp {
 	case tidbast.ShowTables:
-		if stmt.Full || stmt.Pattern != nil || stmt.Where != nil {
+		if stmt.Where != nil {
 			return nil, fmt.Errorf("unsupported SHOW TABLES variant")
 		}
-		return ir.ShowTablesStatement{Database: strings.TrimSpace(stmt.DBName)}, nil
+		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW TABLES")
+		if err != nil {
+			return nil, err
+		}
+		return ir.ShowTablesStatement{
+			Database: strings.TrimSpace(stmt.DBName),
+			Full:     stmt.Full,
+			Pattern:  pattern,
+		}, nil
 	case tidbast.ShowColumns:
 		if stmt.Table == nil {
 			return nil, fmt.Errorf("missing SHOW COLUMNS table")
@@ -58,10 +66,14 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Database: strings.TrimSpace(stmt.DBName),
 		}, nil
 	case tidbast.ShowDatabases:
-		if stmt.Pattern != nil || stmt.Where != nil {
+		if stmt.Where != nil {
 			return nil, fmt.Errorf("unsupported SHOW DATABASES variant")
 		}
-		return ir.ShowDatabasesStatement{}, nil
+		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW DATABASES")
+		if err != nil {
+			return nil, err
+		}
+		return ir.ShowDatabasesStatement{Pattern: pattern}, nil
 	case tidbast.ShowCreateDatabase:
 		if strings.TrimSpace(stmt.DBName) == "" {
 			return nil, fmt.Errorf("missing SHOW CREATE DATABASE name")
@@ -90,7 +102,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		if stmt.GlobalScope || stmt.Where != nil {
 			return nil, fmt.Errorf("unsupported SHOW VARIABLES variant")
 		}
-		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern)
+		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW VARIABLES")
 		if err != nil {
 			return nil, err
 		}
@@ -100,17 +112,17 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 	}
 }
 
-func normalizeTiDBShowLikePattern(pattern *tidbast.PatternLikeOrIlikeExpr) (string, error) {
+func normalizeTiDBShowLikePattern(pattern *tidbast.PatternLikeOrIlikeExpr, label string) (string, error) {
 	if pattern == nil || pattern.Pattern == nil {
 		return "", nil
 	}
 	if pattern.Not || !pattern.IsLike || (pattern.Escape != 0 && pattern.Escape != '\\') {
-		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
+		return "", fmt.Errorf("unsupported %s variant", label)
 	}
 
 	valueExpr, ok := pattern.Pattern.(tidbast.ValueExpr)
 	if !ok {
-		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
+		return "", fmt.Errorf("unsupported %s variant", label)
 	}
 
 	return valueExpr.GetString(), nil

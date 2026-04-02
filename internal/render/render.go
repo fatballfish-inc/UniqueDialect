@@ -77,7 +77,7 @@ func renderStatement(stmt ir.Statement, from, to string, renderState *state) (st
 	case ir.ShowTableStatusStatement:
 		return renderShowTableStatus(value, to)
 	case ir.ShowDatabasesStatement:
-		return renderShowDatabases(to)
+		return renderShowDatabases(value, to)
 	case ir.ShowCreateDatabaseStatement:
 		return renderShowCreateDatabase(value, to)
 	case ir.ShowCreateTableStatement:
@@ -247,14 +247,27 @@ func renderShowTables(stmt ir.ShowTablesStatement, to string) (string, error) {
 			schemaExpr = quoteStringLiteral(strings.TrimSpace(stmt.Database))
 			alias = "Tables_in_" + strings.TrimSpace(stmt.Database)
 		}
-		return "SELECT table_name AS " + quoteIdentifierChain(alias, to) +
-			" FROM information_schema.tables WHERE table_schema = " + schemaExpr +
-			" AND table_type IN ('BASE TABLE', 'VIEW') ORDER BY table_name", nil
-	case "mysql":
-		if strings.TrimSpace(stmt.Database) == "" {
-			return "SHOW TABLES", nil
+		selectClause := "SELECT table_name AS " + quoteIdentifierChain(alias, to)
+		if stmt.Full {
+			selectClause += ", CASE WHEN table_type = 'VIEW' THEN 'VIEW' ELSE 'BASE TABLE' END AS " + quoteIdentifierChain("Table_type", to)
 		}
-		return "SHOW TABLES IN " + quoteIdentifierChain(stmt.Database, to), nil
+		return selectClause +
+			" FROM information_schema.tables WHERE table_schema = " + schemaExpr +
+			" AND table_type IN ('BASE TABLE', 'VIEW')" + renderShowTablesPattern(stmt.Pattern) +
+			" ORDER BY table_name", nil
+	case "mysql":
+		sql := "SHOW "
+		if stmt.Full {
+			sql += "FULL "
+		}
+		sql += "TABLES"
+		if strings.TrimSpace(stmt.Database) != "" {
+			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
+		}
+		if stmt.Pattern != "" {
+			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
+		}
+		return sql, nil
 	default:
 		return "", unsupportedShowTargetDialect(to)
 	}
@@ -383,16 +396,31 @@ func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string,
 	}
 }
 
-func renderShowDatabases(to string) (string, error) {
+func renderShowDatabases(stmt ir.ShowDatabasesStatement, to string) (string, error) {
 	switch to {
 	case "postgres":
-		return "SELECT datname AS " + quoteIdentifierChain("Database", to) +
-			" FROM pg_database WHERE datistemplate = false ORDER BY datname", nil
+		sql := "SELECT datname AS " + quoteIdentifierChain("Database", to) +
+			" FROM pg_database WHERE datistemplate = false"
+		if stmt.Pattern != "" {
+			sql += " AND datname ILIKE " + quoteStringLiteral(stmt.Pattern)
+		}
+		sql += " ORDER BY datname"
+		return sql, nil
 	case "mysql":
-		return "SHOW DATABASES", nil
+		if stmt.Pattern == "" {
+			return "SHOW DATABASES", nil
+		}
+		return "SHOW DATABASES LIKE " + quoteStringLiteral(stmt.Pattern), nil
 	default:
 		return "", unsupportedShowTargetDialect(to)
 	}
+}
+
+func renderShowTablesPattern(pattern string) string {
+	if pattern == "" {
+		return ""
+	}
+	return " AND table_name ILIKE " + quoteStringLiteral(pattern)
 }
 
 func renderShowCreateDatabase(stmt ir.ShowCreateDatabaseStatement, to string) (string, error) {

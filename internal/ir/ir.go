@@ -97,6 +97,8 @@ func (UseStatement) statementNode() {}
 // ShowTablesStatement is the normalized SHOW TABLES statement.
 type ShowTablesStatement struct {
 	Database string
+	Full     bool
+	Pattern  string
 }
 
 func (ShowTablesStatement) statementNode() {}
@@ -126,7 +128,9 @@ type ShowTableStatusStatement struct {
 func (ShowTableStatusStatement) statementNode() {}
 
 // ShowDatabasesStatement is the normalized SHOW DATABASES statement.
-type ShowDatabasesStatement struct{}
+type ShowDatabasesStatement struct {
+	Pattern string
+}
 
 func (ShowDatabasesStatement) statementNode() {}
 
