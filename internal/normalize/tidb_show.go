@@ -23,7 +23,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		if stmt.Table == nil {
 			return nil, fmt.Errorf("missing SHOW COLUMNS table")
 		}
-		if stmt.Full || stmt.Extended || stmt.Pattern != nil || stmt.Where != nil {
+		if stmt.Extended || stmt.Pattern != nil || stmt.Where != nil {
 			return nil, fmt.Errorf("unsupported SHOW COLUMNS variant")
 		}
 		database := strings.TrimSpace(stmt.DBName)
@@ -33,6 +33,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		return ir.ShowColumnsStatement{
 			Table:    strings.TrimSpace(stmt.Table.Name.O),
 			Database: database,
+			Full:     stmt.Full,
 		}, nil
 	case tidbast.ShowIndex:
 		if stmt.Table == nil {
