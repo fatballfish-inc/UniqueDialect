@@ -118,7 +118,8 @@ func (ShowCreateTableStatement) statementNode() {}
 
 // ShowCreateViewStatement is the normalized SHOW CREATE VIEW statement.
 type ShowCreateViewStatement struct {
-	Name string
+	Schema string
+	Name   string
 }
 
 func (ShowCreateViewStatement) statementNode() {}

@@ -765,6 +765,93 @@ func TestTranslatorTranslatesMySQLShowCreateViewToPostgresViaParserHooks(t *test
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowCreateViewWithSchemaToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW CREATE VIEW `appdb`.`active_users`")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT c.relname AS "View", 'CREATE VIEW ' || quote_ident(n.nspname) || '.' || quote_ident(c.relname) || ' AS ' || pg_get_viewdef(c.oid, true) AS "Create View" FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'v' AND c.relname = 'active_users' AND n.nspname = 'appdb'`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLShowCreateViewWithDottedIdentifierToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW CREATE VIEW `my.view`")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+	if !strings.Contains(result.SQL, "c.relname = 'my.view'") {
+		t.Fatalf("Translate() SQL = %q, want dotted identifier preserved as view name", result.SQL)
+	}
+	if strings.Contains(result.SQL, "n.nspname = 'my'") {
+		t.Fatalf("Translate() SQL = %q, want no mistaken schema split for dotted identifier", result.SQL)
+	}
+}
+
+func TestTranslatorTranslatesMySQLShowCreateViewWithSchemaToMySQLViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectMySQL,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW CREATE VIEW `appdb`.`active_users`")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if result.SQL != "SHOW CREATE VIEW `appdb`.`active_users`" {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, "SHOW CREATE VIEW `appdb`.`active_users`")
+	}
+}
+
+func TestTranslatorTranslatesMySQLShowCreateViewWithDottedIdentifierToMySQLViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectMySQL,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW CREATE VIEW `my.view`")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if result.SQL != "SHOW CREATE VIEW `my.view`" {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, "SHOW CREATE VIEW `my.view`")
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowDatabasesToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 

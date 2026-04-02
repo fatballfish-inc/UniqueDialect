@@ -81,7 +81,10 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		if stmt.Table == nil {
 			return nil, fmt.Errorf("missing SHOW CREATE VIEW table")
 		}
-		return ir.ShowCreateViewStatement{Name: normalizeTiDBTableName(stmt.Table)}, nil
+		return ir.ShowCreateViewStatement{
+			Schema: strings.TrimSpace(stmt.Table.Schema.O),
+			Name:   strings.TrimSpace(stmt.Table.Name.O),
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SHOW statement type %v", stmt.Tp)
 	}

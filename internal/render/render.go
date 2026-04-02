@@ -376,18 +376,20 @@ func renderShowCreateTable(stmt ir.ShowCreateTableStatement, to string) (string,
 func renderShowCreateView(stmt ir.ShowCreateViewStatement, to string) (string, error) {
 	switch to {
 	case "postgres":
-		schema, name := splitIdentifierSchemaAndName(stmt.Name)
 		schemaPredicate := "current_schema()"
-		if strings.TrimSpace(schema) != "" {
-			schemaPredicate = quoteStringLiteral(strings.TrimSpace(schema))
+		if strings.TrimSpace(stmt.Schema) != "" {
+			schemaPredicate = quoteStringLiteral(strings.TrimSpace(stmt.Schema))
 		}
 		return "SELECT c.relname AS " + quoteIdentifierChain("View", to) +
 			", 'CREATE VIEW ' || quote_ident(n.nspname) || '.' || quote_ident(c.relname) || ' AS ' || pg_get_viewdef(c.oid, true) AS " +
 			quoteIdentifierChain("Create View", to) +
 			" FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'v' AND c.relname = " +
-			quoteStringLiteral(strings.TrimSpace(name)) + " AND n.nspname = " + schemaPredicate, nil
+			quoteStringLiteral(strings.TrimSpace(stmt.Name)) + " AND n.nspname = " + schemaPredicate, nil
 	case "mysql":
-		return "SHOW CREATE VIEW " + quoteIdentifierChain(stmt.Name, to), nil
+		if strings.TrimSpace(stmt.Schema) != "" {
+			return "SHOW CREATE VIEW " + quoteIdentifierPart(stmt.Schema, to) + "." + quoteIdentifierPart(stmt.Name, to), nil
+		}
+		return "SHOW CREATE VIEW " + quoteIdentifierPart(stmt.Name, to), nil
 	default:
 		return "", unsupportedShowTargetDialect(to)
 	}
