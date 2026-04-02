@@ -67,7 +67,11 @@ func ParsedStatement(parsed *internalparser.ParsedStatement) (ir.Statement, erro
 	case *tidbast.CommitStmt:
 		return normalizeTiDBRawDDL(parsed.SQL)
 	case *tidbast.RollbackStmt:
-		return normalizeTiDBRawDDL(parsed.SQL)
+		return normalizeTiDBRollback(node, parsed.SQL)
+	case *tidbast.SavepointStmt:
+		return normalizeTiDBSavepoint(node)
+	case *tidbast.ReleaseSavepointStmt:
+		return normalizeTiDBReleaseSavepoint(node)
 	case *tidbast.UseStmt:
 		return ir.UseStatement{Database: node.DBName}, nil
 	case *tidbast.InsertStmt:

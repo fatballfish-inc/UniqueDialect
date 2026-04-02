@@ -233,6 +233,97 @@ func TestTranslatorTranslatesMySQLWithOffsetLimitToPostgres(t *testing.T) {
 	}
 }
 
+func TestTranslatorTranslatesMySQLSavepointToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SAVEPOINT sp1")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if got, want := result.SQL, "SAVEPOINT sp1"; got != want {
+		t.Fatalf("Translate() SQL = %q, want %q", got, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLRollbackToSavepointToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "ROLLBACK TO SAVEPOINT sp1")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if got, want := result.SQL, "ROLLBACK TO SAVEPOINT sp1"; got != want {
+		t.Fatalf("Translate() SQL = %q, want %q", got, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLReleaseSavepointToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "RELEASE SAVEPOINT sp1")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if got, want := result.SQL, "RELEASE SAVEPOINT sp1"; got != want {
+		t.Fatalf("Translate() SQL = %q, want %q", got, want)
+	}
+}
+
+func TestTranslatorBlocksMySQLCommitReleaseToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "COMMIT RELEASE")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want parser adaptation error")
+	}
+
+	var adaptationErr *uniquedialect.ParserAdaptationError
+	if !errors.As(err, &adaptationErr) {
+		t.Fatalf("Translate() error = %T, want *ParserAdaptationError", err)
+	}
+	if adaptationErr.StatementKind != "commit" {
+		t.Fatalf("ParserAdaptationError.StatementKind = %q, want %q", adaptationErr.StatementKind, "commit")
+	}
+	if adaptationErr.Status != "recognized_unadapted" {
+		t.Fatalf("ParserAdaptationError.Status = %q, want %q", adaptationErr.Status, "recognized_unadapted")
+	}
+}
+
 func TestTranslatorTranslatesMySQLWithToPostgres(t *testing.T) {
 	t.Parallel()
 
@@ -1438,7 +1529,7 @@ func TestTranslatorRejectsMySQLShowColumnsToSQLiteViaParserHooks(t *testing.T) {
 	}
 }
 
-func TestTranslatorRejectsUnsupportedMySQLShowFullColumnsToPostgresViaParserHooks(t *testing.T) {
+func TestTranslatorTranslatesMySQLShowFullColumnsToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
 	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
@@ -1449,12 +1540,21 @@ func TestTranslatorRejectsUnsupportedMySQLShowFullColumnsToPostgresViaParserHook
 		t.Fatalf("NewTranslator() error = %v", err)
 	}
 
-	_, err = translator.Translate(context.Background(), "SHOW FULL COLUMNS FROM `users`")
-	if err == nil {
-		t.Fatalf("Translate() error = nil, want unsupported SHOW COLUMNS variant error")
+	result, err := translator.Translate(context.Background(), "SHOW FULL COLUMNS FROM `users`")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "unsupported SHOW COLUMNS variant") {
-		t.Fatalf("Translate() error = %v, want unsupported SHOW COLUMNS variant error", err)
+	if !strings.Contains(result.SQL, `AS "Collation"`) {
+		t.Fatalf("Translate() SQL = %q, want Collation column", result.SQL)
+	}
+	if !strings.Contains(result.SQL, `AS "Privileges"`) {
+		t.Fatalf("Translate() SQL = %q, want Privileges column", result.SQL)
+	}
+	if !strings.Contains(result.SQL, `AS "Comment"`) {
+		t.Fatalf("Translate() SQL = %q, want Comment column", result.SQL)
+	}
+	if !strings.Contains(result.SQL, "t.relname = 'users'") {
+		t.Fatalf("Translate() SQL = %q, want table predicate", result.SQL)
 	}
 }
 

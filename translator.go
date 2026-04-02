@@ -88,13 +88,6 @@ func (t *Translator) translateSQL(sql string) (string, error) {
 
 	parsed, err := internalparser.ParseOne(sql, t.opts.InputDialect)
 	if err == nil {
-		normalized, normalizeErr := normalize.ParsedStatement(parsed)
-		if normalizeErr == nil {
-			return render.Statement(normalized, string(t.opts.InputDialect), string(t.opts.TargetDialect))
-		}
-		if (parsed.Kind == internalparser.StatementKindShow || parsed.Kind == internalparser.StatementKindSet) && parsed.Status == internalparser.SupportStatusSupported {
-			return "", normalizeErr
-		}
 		if shouldBlockRecognizedUnadapted(parsed.Kind, parsed.Status) {
 			return "", &ParserAdaptationError{
 				SourceDialect:  string(t.opts.InputDialect),
@@ -102,6 +95,14 @@ func (t *Translator) translateSQL(sql string) (string, error) {
 				NativeNodeType: parsed.NativeNodeType,
 				Status:         string(parsed.Status),
 			}
+		}
+
+		normalized, normalizeErr := normalize.ParsedStatement(parsed)
+		if normalizeErr == nil {
+			return render.Statement(normalized, string(t.opts.InputDialect), string(t.opts.TargetDialect))
+		}
+		if (parsed.Kind == internalparser.StatementKindShow || parsed.Kind == internalparser.StatementKindSet) && parsed.Status == internalparser.SupportStatusSupported {
+			return "", normalizeErr
 		}
 	}
 
@@ -119,7 +120,7 @@ func shouldBlockRecognizedUnadapted(kind internalparser.StatementKind, status in
 		return false
 	}
 	switch kind {
-	case internalparser.StatementKindWith, internalparser.StatementKindSetOp, internalparser.StatementKindSet, internalparser.StatementKindShow:
+	case internalparser.StatementKindWith, internalparser.StatementKindSetOp, internalparser.StatementKindSet, internalparser.StatementKindShow, internalparser.StatementKindBegin, internalparser.StatementKindCommit, internalparser.StatementKindRollback:
 		return true
 	default:
 		return false

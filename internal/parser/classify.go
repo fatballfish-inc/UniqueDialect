@@ -68,9 +68,19 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 	case *tidbast.BeginStmt:
 		return StatementKindBegin, SupportStatusSupported
 	case *tidbast.CommitStmt:
+		if value.CompletionType != tidbast.CompletionTypeDefault {
+			return StatementKindCommit, SupportStatusRecognizedUnadapted
+		}
 		return StatementKindCommit, SupportStatusSupported
 	case *tidbast.RollbackStmt:
+		if value.CompletionType != tidbast.CompletionTypeDefault {
+			return StatementKindRollback, SupportStatusRecognizedUnadapted
+		}
 		return StatementKindRollback, SupportStatusSupported
+	case *tidbast.SavepointStmt:
+		return StatementKindSavepoint, SupportStatusSupported
+	case *tidbast.ReleaseSavepointStmt:
+		return StatementKindReleaseSavepoint, SupportStatusSupported
 	case *tidbast.UseStmt:
 		return StatementKindUse, SupportStatusSupported
 	default:

@@ -66,6 +66,27 @@ type SetStatement struct {
 
 func (SetStatement) statementNode() {}
 
+// SavepointStatement is the normalized SAVEPOINT statement.
+type SavepointStatement struct {
+	Name string
+}
+
+func (SavepointStatement) statementNode() {}
+
+// ReleaseSavepointStatement is the normalized RELEASE SAVEPOINT statement.
+type ReleaseSavepointStatement struct {
+	Name string
+}
+
+func (ReleaseSavepointStatement) statementNode() {}
+
+// RollbackToSavepointStatement is the normalized ROLLBACK TO SAVEPOINT statement.
+type RollbackToSavepointStatement struct {
+	Name string
+}
+
+func (RollbackToSavepointStatement) statementNode() {}
+
 // UseStatement is the normalized USE/current-schema statement.
 type UseStatement struct {
 	Database string
@@ -84,6 +105,7 @@ func (ShowTablesStatement) statementNode() {}
 type ShowColumnsStatement struct {
 	Table    string
 	Database string
+	Full     bool
 }
 
 func (ShowColumnsStatement) statementNode() {}

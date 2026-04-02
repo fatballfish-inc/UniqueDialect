@@ -60,6 +60,12 @@ func renderStatement(stmt ir.Statement, from, to string, renderState *state) (st
 		return renderDelete(value, from, to, renderState), nil
 	case ir.SetStatement:
 		return renderSet(value, to)
+	case ir.SavepointStatement:
+		return renderSavepoint(value), nil
+	case ir.ReleaseSavepointStatement:
+		return renderReleaseSavepoint(value), nil
+	case ir.RollbackToSavepointStatement:
+		return renderRollbackToSavepoint(value), nil
 	case ir.UseStatement:
 		return renderUse(value, to), nil
 	case ir.ShowTablesStatement:
@@ -202,6 +208,18 @@ func renderSet(stmt ir.SetStatement, to string) (string, error) {
 	}
 }
 
+func renderSavepoint(stmt ir.SavepointStatement) string {
+	return "SAVEPOINT " + strings.TrimSpace(stmt.Name)
+}
+
+func renderReleaseSavepoint(stmt ir.ReleaseSavepointStatement) string {
+	return "RELEASE SAVEPOINT " + strings.TrimSpace(stmt.Name)
+}
+
+func renderRollbackToSavepoint(stmt ir.RollbackToSavepointStatement) string {
+	return "ROLLBACK TO SAVEPOINT " + strings.TrimSpace(stmt.Name)
+}
+
 func renderPostgresClientEncoding(charset string) string {
 	switch strings.ToLower(strings.TrimSpace(charset)) {
 	case "utf8", "utf8mb4":
@@ -251,17 +269,34 @@ func renderShowColumns(stmt ir.ShowColumnsStatement, to string) (string, error) 
 		if schema != "" {
 			schemaPredicate = "n.nspname = " + quoteStringLiteral(schema)
 		}
-		return "SELECT a.attname AS " + quoteIdentifierChain("Field", to) +
-			", format_type(a.atttypid, a.atttypmod) AS " + quoteIdentifierChain("Type", to) +
-			", CASE WHEN a.attnotnull THEN 'NO' ELSE 'YES' END AS " + quoteIdentifierChain("Null", to) +
+		selectColumns := "a.attname AS " + quoteIdentifierChain("Field", to) +
+			", format_type(a.atttypid, a.atttypmod) AS " + quoteIdentifierChain("Type", to)
+		if stmt.Full {
+			selectColumns += ", coll.collname AS " + quoteIdentifierChain("Collation", to)
+		}
+		selectColumns += ", CASE WHEN a.attnotnull THEN 'NO' ELSE 'YES' END AS " + quoteIdentifierChain("Null", to) +
 			", CASE WHEN EXISTS (SELECT 1 FROM pg_index ix WHERE ix.indrelid = t.oid AND ix.indisprimary AND a.attnum = ANY(ix.indkey)) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_index ix WHERE ix.indrelid = t.oid AND ix.indisunique AND ix.indnkeyatts = 1 AND a.attnum = ANY(ix.indkey)) THEN 'UNI' WHEN EXISTS (SELECT 1 FROM pg_index ix WHERE ix.indrelid = t.oid AND a.attnum = ANY(ix.indkey)) THEN 'MUL' ELSE '' END AS " + quoteIdentifierChain("Key", to) +
 			", pg_get_expr(ad.adbin, ad.adrelid) AS " + quoteIdentifierChain("Default", to) +
-			", CASE WHEN a.attidentity IN ('a', 'd') THEN 'auto_increment' WHEN a.attgenerated = 's' THEN 'STORED GENERATED' ELSE '' END AS " + quoteIdentifierChain("Extra", to) +
-			" FROM pg_attribute a JOIN pg_class t ON t.oid = a.attrelid JOIN pg_namespace n ON n.oid = t.relnamespace LEFT JOIN pg_attrdef ad ON ad.adrelid = a.attrelid AND ad.adnum = a.attnum WHERE t.relkind IN ('r', 'p', 'v', 'm', 'f') AND t.relname = " +
+			", CASE WHEN a.attidentity IN ('a', 'd') THEN 'auto_increment' WHEN a.attgenerated = 's' THEN 'STORED GENERATED' ELSE '' END AS " + quoteIdentifierChain("Extra", to)
+		if stmt.Full {
+			selectColumns += ", '' AS " + quoteIdentifierChain("Privileges", to) +
+				", COALESCE(col_description(t.oid, a.attnum), '') AS " + quoteIdentifierChain("Comment", to)
+		}
+		sql := "SELECT " + selectColumns +
+			" FROM pg_attribute a JOIN pg_class t ON t.oid = a.attrelid JOIN pg_namespace n ON n.oid = t.relnamespace LEFT JOIN pg_attrdef ad ON ad.adrelid = a.attrelid AND ad.adnum = a.attnum"
+		if stmt.Full {
+			sql += " LEFT JOIN pg_collation coll ON coll.oid = a.attcollation AND a.attcollation <> 0"
+		}
+		sql += " WHERE t.relkind IN ('r', 'p', 'v', 'm', 'f') AND t.relname = " +
 			quoteStringLiteral(strings.TrimSpace(table)) + " AND " + schemaPredicate +
-			" AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum", nil
+			" AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum"
+		return sql, nil
 	case "mysql":
-		sql := "SHOW COLUMNS FROM " + quoteIdentifierChain(stmt.Table, to)
+		sql := "SHOW "
+		if stmt.Full {
+			sql += "FULL "
+		}
+		sql += "COLUMNS FROM " + quoteIdentifierChain(stmt.Table, to)
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
 		}

@@ -245,6 +245,19 @@ func TestParseOneClassifiesCommitAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesCommitReleaseAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne("COMMIT RELEASE", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindCommit {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindCommit)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneClassifiesRollbackAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne("ROLLBACK", uniquedialect.DialectMySQL)
 	if err != nil {
@@ -252,6 +265,45 @@ func TestParseOneClassifiesRollbackAsSupported(t *testing.T) {
 	}
 	if parsed.Kind != internalparser.StatementKindRollback {
 		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindRollback)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesRollbackToSavepointAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne("ROLLBACK TO SAVEPOINT sp1", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindRollback {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindRollback)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesSavepointAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne("SAVEPOINT sp1", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSavepoint {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSavepoint)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesReleaseSavepointAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne("RELEASE SAVEPOINT sp1", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindReleaseSavepoint {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindReleaseSavepoint)
 	}
 	if parsed.Status != internalparser.SupportStatusSupported {
 		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
@@ -453,6 +505,22 @@ func TestParseOneClassifiesShowCreateDatabaseAsSupported(t *testing.T) {
 func TestParseOneClassifiesShowColumnsAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW COLUMNS FROM `users`",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowFullColumnsAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW FULL COLUMNS FROM `users`",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {
