@@ -132,6 +132,13 @@ type ShowCreateViewStatement struct {
 
 func (ShowCreateViewStatement) statementNode() {}
 
+// ShowVariablesStatement is the normalized SHOW VARIABLES statement.
+type ShowVariablesStatement struct {
+	Pattern string
+}
+
+func (ShowVariablesStatement) statementNode() {}
+
 // CreateTableStatement is the normalized CREATE TABLE IR.
 type CreateTableStatement struct {
 	Name        string

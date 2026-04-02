@@ -370,6 +370,54 @@ func TestParseOneClassifiesShowCreateViewAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowVariablesAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW VARIABLES",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowSessionVariablesLikeAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW SESSION VARIABLES LIKE 'client_%'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowGlobalVariablesAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW GLOBAL VARIABLES",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneClassifiesShowDatabasesAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW DATABASES",

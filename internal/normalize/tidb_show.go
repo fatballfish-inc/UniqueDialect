@@ -85,7 +85,32 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Schema: strings.TrimSpace(stmt.Table.Schema.O),
 			Name:   strings.TrimSpace(stmt.Table.Name.O),
 		}, nil
+	case tidbast.ShowVariables:
+		if stmt.GlobalScope || stmt.Where != nil {
+			return nil, fmt.Errorf("unsupported SHOW VARIABLES variant")
+		}
+		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern)
+		if err != nil {
+			return nil, err
+		}
+		return ir.ShowVariablesStatement{Pattern: pattern}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SHOW statement type %v", stmt.Tp)
 	}
+}
+
+func normalizeTiDBShowLikePattern(pattern *tidbast.PatternLikeOrIlikeExpr) (string, error) {
+	if pattern == nil || pattern.Pattern == nil {
+		return "", nil
+	}
+	if pattern.Not || !pattern.IsLike || (pattern.Escape != 0 && pattern.Escape != '\\') {
+		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
+	}
+
+	valueExpr, ok := pattern.Pattern.(tidbast.ValueExpr)
+	if !ok {
+		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
+	}
+
+	return valueExpr.GetString(), nil
 }

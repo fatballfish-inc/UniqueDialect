@@ -78,6 +78,8 @@ func renderStatement(stmt ir.Statement, from, to string, renderState *state) (st
 		return renderShowCreateTable(value, to)
 	case ir.ShowCreateViewStatement:
 		return renderShowCreateView(value, to)
+	case ir.ShowVariablesStatement:
+		return renderShowVariables(value, to)
 	case ir.CreateTableStatement:
 		return renderCreateTable(value, from, to, renderState), nil
 	case ir.AlterTableStatement:
@@ -415,6 +417,27 @@ func renderShowCreateView(stmt ir.ShowCreateViewStatement, to string) (string, e
 			return "SHOW CREATE VIEW " + quoteIdentifierPart(stmt.Schema, to) + "." + quoteIdentifierPart(stmt.Name, to), nil
 		}
 		return "SHOW CREATE VIEW " + quoteIdentifierPart(stmt.Name, to), nil
+	default:
+		return "", unsupportedShowTargetDialect(to)
+	}
+}
+
+func renderShowVariables(stmt ir.ShowVariablesStatement, to string) (string, error) {
+	switch to {
+	case "postgres":
+		sql := "SELECT name AS " + quoteIdentifierChain("Variable_name", to) +
+			", setting AS " + quoteIdentifierChain("Value", to) +
+			" FROM pg_catalog.pg_settings"
+		if stmt.Pattern != "" {
+			sql += " WHERE name ILIKE " + quoteStringLiteral(stmt.Pattern)
+		}
+		sql += " ORDER BY name"
+		return sql, nil
+	case "mysql":
+		if stmt.Pattern == "" {
+			return "SHOW VARIABLES", nil
+		}
+		return "SHOW VARIABLES LIKE " + quoteStringLiteral(stmt.Pattern), nil
 	default:
 		return "", unsupportedShowTargetDialect(to)
 	}

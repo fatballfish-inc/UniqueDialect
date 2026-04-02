@@ -42,6 +42,11 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 		switch value.Tp {
 		case tidbast.ShowTables, tidbast.ShowColumns, tidbast.ShowIndex, tidbast.ShowTableStatus, tidbast.ShowCreateTable, tidbast.ShowCreateView, tidbast.ShowDatabases, tidbast.ShowCreateDatabase:
 			return StatementKindShow, SupportStatusSupported
+		case tidbast.ShowVariables:
+			if value.GlobalScope {
+				return StatementKindShow, SupportStatusRecognizedUnadapted
+			}
+			return StatementKindShow, SupportStatusSupported
 		default:
 			return StatementKindShow, SupportStatusRecognizedUnadapted
 		}
