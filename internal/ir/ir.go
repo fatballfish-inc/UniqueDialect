@@ -108,6 +108,14 @@ type ShowCreateDatabaseStatement struct {
 
 func (ShowCreateDatabaseStatement) statementNode() {}
 
+// ShowCreateTableStatement is the normalized SHOW CREATE TABLE statement.
+type ShowCreateTableStatement struct {
+	Schema string
+	Name   string
+}
+
+func (ShowCreateTableStatement) statementNode() {}
+
 // ShowCreateViewStatement is the normalized SHOW CREATE VIEW statement.
 type ShowCreateViewStatement struct {
 	Name string

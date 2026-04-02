@@ -69,6 +69,14 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Name:        strings.TrimSpace(stmt.DBName),
 			IfNotExists: stmt.IfNotExists,
 		}, nil
+	case tidbast.ShowCreateTable:
+		if stmt.Table == nil {
+			return nil, fmt.Errorf("missing SHOW CREATE TABLE table")
+		}
+		return ir.ShowCreateTableStatement{
+			Schema: strings.TrimSpace(stmt.Table.Schema.O),
+			Name:   strings.TrimSpace(stmt.Table.Name.O),
+		}, nil
 	case tidbast.ShowCreateView:
 		if stmt.Table == nil {
 			return nil, fmt.Errorf("missing SHOW CREATE VIEW table")
