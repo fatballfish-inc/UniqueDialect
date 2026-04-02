@@ -301,7 +301,11 @@ func renderShowColumns(stmt ir.ShowColumnsStatement, to string) (string, error) 
 			sql += " LEFT JOIN pg_collation coll ON coll.oid = a.attcollation AND a.attcollation <> 0"
 		}
 		sql += " WHERE t.relkind IN ('r', 'p', 'v', 'm', 'f') AND t.relname = " +
-			quoteStringLiteral(strings.TrimSpace(table)) + " AND " + schemaPredicate +
+			quoteStringLiteral(strings.TrimSpace(table)) + " AND " + schemaPredicate
+		if stmt.Pattern != "" {
+			sql += " AND a.attname ILIKE " + quoteStringLiteral(stmt.Pattern)
+		}
+		sql +=
 			" AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum"
 		return sql, nil
 	case "mysql":
@@ -312,6 +316,9 @@ func renderShowColumns(stmt ir.ShowColumnsStatement, to string) (string, error) 
 		sql += "COLUMNS FROM " + quoteIdentifierChain(stmt.Table, to)
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
+		}
+		if stmt.Pattern != "" {
+			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		return sql, nil
 	default:
