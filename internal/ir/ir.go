@@ -130,6 +130,7 @@ type ShowIndexStatement struct {
 	Table    string
 	Database string
 	KeyName  string
+	Column   string
 }
 
 func (ShowIndexStatement) statementNode() {}

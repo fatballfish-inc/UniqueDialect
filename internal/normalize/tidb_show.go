@@ -64,7 +64,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		if stmt.Pattern != nil {
 			return nil, fmt.Errorf("unsupported SHOW INDEX variant")
 		}
-		keyName, err := normalizeTiDBShowIndexWhere(stmt.Where)
+		keyName, columnName, err := normalizeTiDBShowIndexWhere(stmt.Where)
 		if err != nil {
 			return nil, err
 		}
@@ -76,6 +76,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Table:    strings.TrimSpace(stmt.Table.Name.O),
 			Database: database,
 			KeyName:  keyName,
+			Column:   columnName,
 		}, nil
 	case tidbast.ShowTableStatus:
 		name, err := normalizeTiDBShowTableStatusWhere(stmt.Where)
@@ -182,27 +183,36 @@ func normalizeTiDBShowTableStatusWhere(where tidbast.ExprNode) (string, error) {
 	return strings.TrimSpace(valueExpr.GetString()), nil
 }
 
-func normalizeTiDBShowIndexWhere(where tidbast.ExprNode) (string, error) {
+func normalizeTiDBShowIndexWhere(where tidbast.ExprNode) (string, string, error) {
 	if where == nil {
-		return "", nil
+		return "", "", nil
 	}
 
 	binary, ok := where.(*tidbast.BinaryOperationExpr)
 	if !ok || binary.Op != tidbopcode.EQ {
-		return "", fmt.Errorf("unsupported SHOW INDEX variant")
+		return "", "", fmt.Errorf("unsupported SHOW INDEX variant")
 	}
 
 	columnExpr, ok := binary.L.(*tidbast.ColumnNameExpr)
-	if !ok || columnExpr.Name == nil || !strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Key_name") {
-		return "", fmt.Errorf("unsupported SHOW INDEX variant")
+	if !ok || columnExpr.Name == nil {
+		return "", "", fmt.Errorf("unsupported SHOW INDEX variant")
 	}
 
 	valueExpr, ok := binary.R.(tidbast.ValueExpr)
 	if !ok {
-		return "", fmt.Errorf("unsupported SHOW INDEX variant")
+		return "", "", fmt.Errorf("unsupported SHOW INDEX variant")
 	}
 
-	return strings.TrimSpace(valueExpr.GetString()), nil
+	value := strings.TrimSpace(valueExpr.GetString())
+
+	switch {
+	case strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Key_name"):
+		return value, "", nil
+	case strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Column_name"):
+		return "", value, nil
+	default:
+		return "", "", fmt.Errorf("unsupported SHOW INDEX variant")
+	}
 }
 
 func normalizeTiDBShowVariablesWhere(where tidbast.ExprNode) (string, error) {
