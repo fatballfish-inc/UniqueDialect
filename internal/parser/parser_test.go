@@ -232,6 +232,19 @@ func TestParseOneClassifiesBeginAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesBeginPessimisticAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne("BEGIN PESSIMISTIC", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindBegin {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindBegin)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneClassifiesCommitAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne("COMMIT", uniquedialect.DialectMySQL)
 	if err != nil {
@@ -617,6 +630,22 @@ func TestParseOneClassifiesShowIndexAsSupported(t *testing.T) {
 func TestParseOneClassifiesShowTableStatusAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW TABLE STATUS",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowTableStatusLikeAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW TABLE STATUS LIKE 'user%'",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {

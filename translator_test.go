@@ -571,6 +571,34 @@ func TestTranslatorTranslatesMySQLBeginToPostgresViaParserHooks(t *testing.T) {
 	}
 }
 
+func TestTranslatorBlocksMySQLBeginPessimisticToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "BEGIN PESSIMISTIC")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want parser adaptation error")
+	}
+
+	var adaptationErr *uniquedialect.ParserAdaptationError
+	if !errors.As(err, &adaptationErr) {
+		t.Fatalf("Translate() error = %T, want *ParserAdaptationError", err)
+	}
+	if adaptationErr.StatementKind != "begin" {
+		t.Fatalf("ParserAdaptationError.StatementKind = %q, want %q", adaptationErr.StatementKind, "begin")
+	}
+	if adaptationErr.Status != "recognized_unadapted" {
+		t.Fatalf("ParserAdaptationError.Status = %q, want %q", adaptationErr.Status, "recognized_unadapted")
+	}
+}
+
 func TestTranslatorTranslatesMySQLCommitToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 

@@ -66,7 +66,7 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 	case *tidbast.DropIndexStmt:
 		return StatementKindDropIndex, SupportStatusSupported
 	case *tidbast.BeginStmt:
-		return StatementKindBegin, SupportStatusSupported
+		return classifyTiDBBeginStatement(value)
 	case *tidbast.CommitStmt:
 		if value.CompletionType != tidbast.CompletionTypeDefault {
 			return StatementKindCommit, SupportStatusRecognizedUnadapted
@@ -99,4 +99,14 @@ func classifyTiDBSetStatement(stmt *tidbast.SetStmt) (StatementKind, SupportStat
 	default:
 		return StatementKindSet, SupportStatusRecognizedUnadapted
 	}
+}
+
+func classifyTiDBBeginStatement(stmt *tidbast.BeginStmt) (StatementKind, SupportStatus) {
+	if stmt == nil {
+		return StatementKindBegin, SupportStatusSupported
+	}
+	if stmt.Mode != "" || stmt.CausalConsistencyOnly || stmt.ReadOnly || stmt.AsOf != nil {
+		return StatementKindBegin, SupportStatusRecognizedUnadapted
+	}
+	return StatementKindBegin, SupportStatusSupported
 }
