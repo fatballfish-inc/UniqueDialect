@@ -77,5 +77,5 @@ Status values:
 - [x] `SHOW TABLE STATUS [FROM db] LIKE '...'`
 - [x] `SHOW TABLE STATUS WHERE Name = '...'`
 - [x] `SHOW TABLE STATUS WHERE Comment = '...'`
-- [ ] Schema-qualified coverage/docs completion for `SHOW TABLE STATUS [FROM db]` subsets
+- [x] Schema-qualified coverage/docs completion for `SHOW TABLE STATUS [FROM db]` subsets
 - [ ] Compound predicates, non-equality predicates, and broader metadata-column filters

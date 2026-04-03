@@ -1031,6 +1031,22 @@ func TestParseOneClassifiesShowTableStatusLikeAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowTableStatusInDatabaseLikeAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW TABLE STATUS IN `appdb` LIKE 'user%'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowTableStatusWhereNameAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW TABLE STATUS WHERE Name = 'users'",
