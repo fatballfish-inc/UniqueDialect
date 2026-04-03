@@ -403,6 +403,7 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			", CASE WHEN k.attnum = 0 THEN pg_get_indexdef(ix.indexrelid, k.ordinality, true) ELSE NULL END AS " + quoteIdentifierChain("Expression", to) +
 			" FROM pg_index ix JOIN pg_class t ON t.oid = ix.indrelid JOIN pg_class i ON i.oid = ix.indexrelid JOIN pg_am am ON am.oid = i.relam JOIN pg_namespace n ON n.oid = t.relnamespace JOIN LATERAL unnest(string_to_array(ix.indkey::text, ' ')::smallint[]) WITH ORDINALITY AS k(attnum, ordinality) ON TRUE LEFT JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum WHERE t.relkind IN ('r', 'p') AND t.relname = " + quoteStringLiteral(strings.TrimSpace(table)) +
 			" AND " + visibilityPredicate +
+			renderShowIndexKeyName(stmt.KeyName) +
 			" AND k.ordinality <= ix.indnkeyatts" +
 			" ORDER BY i.relname, k.ordinality", nil
 	case "mysql":
@@ -410,10 +411,21 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
 		}
+		if stmt.KeyName != "" {
+			sql += " WHERE Key_name = " + quoteStringLiteral(stmt.KeyName)
+		}
 		return sql, nil
 	default:
 		return "", unsupportedShowTargetDialect(to)
 	}
+}
+
+func renderShowIndexKeyName(keyName string) string {
+	if strings.TrimSpace(keyName) == "" {
+		return ""
+	}
+
+	return " AND i.relname = " + quoteStringLiteral(strings.TrimSpace(keyName))
 }
 
 func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string, error) {

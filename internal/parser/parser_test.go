@@ -951,6 +951,22 @@ func TestParseOneClassifiesShowIndexInDatabaseAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowIndexWhereKeyNameAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW INDEX FROM `users` WHERE Key_name = 'idx_users_name'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowTableStatusAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW TABLE STATUS",
