@@ -1525,6 +1525,28 @@ func TestTranslatorTranslatesMySQLShowTablesInDatabaseWhereTableNameToPostgresVi
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowFullTablesInDatabaseWhereTableNameToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW FULL TABLES IN `appdb` WHERE Tables_in_appdb = 'users'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT table_name AS "Tables_in_appdb", CASE WHEN table_type = 'VIEW' THEN 'VIEW' ELSE 'BASE TABLE' END AS "Table_type" FROM information_schema.tables WHERE table_schema = 'appdb' AND table_type IN ('BASE TABLE', 'VIEW') AND table_name = 'users' ORDER BY table_name`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowDatabasesLikeToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
@@ -2047,6 +2069,28 @@ func TestTranslatorTranslatesMySQLShowTableStatusWhereNameEqualsToPostgresViaPar
 	}
 
 	want := `SELECT c.relname AS "Name", COALESCE(am.amname, 'heap') AS "Engine", NULL AS "Version", NULL AS "Row_format", CASE WHEN c.reltuples < 0 THEN NULL ELSE c.reltuples::bigint END AS "Rows", CASE WHEN c.reltuples > 0 THEN pg_relation_size(c.oid) / NULLIF(c.reltuples::bigint, 0) ELSE NULL END AS "Avg_row_length", pg_relation_size(c.oid) AS "Data_length", NULL AS "Max_data_length", pg_indexes_size(c.oid) AS "Index_length", NULL AS "Data_free", NULL AS "Auto_increment", NULL AS "Create_time", NULL AS "Update_time", NULL AS "Check_time", NULL AS "Collation", NULL AS "Checksum", NULL AS "Create_options", COALESCE(obj_description(c.oid, 'pg_class'), '') AS "Comment" FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_am am ON am.oid = c.relam WHERE c.relkind IN ('r', 'p') AND pg_table_is_visible(c.oid) AND c.relname = 'users' ORDER BY c.relname`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLShowTableStatusInDatabaseWhereNameEqualsToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW TABLE STATUS IN `appdb` WHERE Name = 'users'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT c.relname AS "Name", COALESCE(am.amname, 'heap') AS "Engine", NULL AS "Version", NULL AS "Row_format", CASE WHEN c.reltuples < 0 THEN NULL ELSE c.reltuples::bigint END AS "Rows", CASE WHEN c.reltuples > 0 THEN pg_relation_size(c.oid) / NULLIF(c.reltuples::bigint, 0) ELSE NULL END AS "Avg_row_length", pg_relation_size(c.oid) AS "Data_length", NULL AS "Max_data_length", pg_indexes_size(c.oid) AS "Index_length", NULL AS "Data_free", NULL AS "Auto_increment", NULL AS "Create_time", NULL AS "Update_time", NULL AS "Check_time", NULL AS "Collation", NULL AS "Checksum", NULL AS "Create_options", COALESCE(obj_description(c.oid, 'pg_class'), '') AS "Comment" FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_am am ON am.oid = c.relam WHERE c.relkind IN ('r', 'p') AND n.nspname = 'appdb' AND c.relname = 'users' ORDER BY c.relname`
 	if result.SQL != want {
 		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
 	}
