@@ -1047,6 +1047,22 @@ func TestParseOneClassifiesShowTableStatusWhereNameAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowTableStatusWhereCommentAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW TABLE STATUS WHERE Comment = 'archived'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowCreateTableAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW CREATE TABLE `users`",

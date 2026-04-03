@@ -80,7 +80,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			IndexType: indexType,
 		}, nil
 	case tidbast.ShowTableStatus:
-		name, err := normalizeTiDBShowTableStatusWhere(stmt.Where)
+		name, comment, err := normalizeTiDBShowTableStatusWhere(stmt.Where)
 		if err != nil {
 			return nil, err
 		}
@@ -92,6 +92,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Database: strings.TrimSpace(stmt.DBName),
 			Pattern:  pattern,
 			Name:     name,
+			Comment:  comment,
 		}, nil
 	case tidbast.ShowDatabases:
 		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW DATABASES")
@@ -161,27 +162,36 @@ func normalizeTiDBShowLikePattern(pattern *tidbast.PatternLikeOrIlikeExpr, label
 	return valueExpr.GetString(), nil
 }
 
-func normalizeTiDBShowTableStatusWhere(where tidbast.ExprNode) (string, error) {
+func normalizeTiDBShowTableStatusWhere(where tidbast.ExprNode) (string, string, error) {
 	if where == nil {
-		return "", nil
+		return "", "", nil
 	}
 
 	binary, ok := where.(*tidbast.BinaryOperationExpr)
 	if !ok || binary.Op != tidbopcode.EQ {
-		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+		return "", "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
 	}
 
 	columnExpr, ok := binary.L.(*tidbast.ColumnNameExpr)
-	if !ok || columnExpr.Name == nil || !strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Name") {
-		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+	if !ok || columnExpr.Name == nil {
+		return "", "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
 	}
 
 	valueExpr, ok := binary.R.(tidbast.ValueExpr)
 	if !ok {
-		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+		return "", "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
 	}
 
-	return strings.TrimSpace(valueExpr.GetString()), nil
+	value := strings.TrimSpace(valueExpr.GetString())
+
+	switch {
+	case strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Name"):
+		return value, "", nil
+	case strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Comment"):
+		return "", value, nil
+	default:
+		return "", "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+	}
 }
 
 func normalizeTiDBShowIndexWhere(where tidbast.ExprNode) (string, string, string, error) {
