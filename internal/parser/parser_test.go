@@ -380,6 +380,19 @@ func TestParseOneClassifiesCommitAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesCommitAndNoChainAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne("COMMIT AND NO CHAIN", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindCommit {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindCommit)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneClassifiesCommitReleaseAsRecognizedUnadapted(t *testing.T) {
 	parsed, err := internalparser.ParseOne("COMMIT RELEASE", uniquedialect.DialectMySQL)
 	if err != nil {
@@ -403,6 +416,19 @@ func TestParseOneClassifiesRollbackAsSupported(t *testing.T) {
 	}
 	if parsed.Status != internalparser.SupportStatusSupported {
 		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesRollbackNoReleaseAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne("ROLLBACK NO RELEASE", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindRollback {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindRollback)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
 	}
 }
 

@@ -669,6 +669,34 @@ func TestTranslatorTranslatesMySQLCommitToPostgresViaParserHooks(t *testing.T) {
 	}
 }
 
+func TestTranslatorBlocksMySQLCommitAndNoChainToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "COMMIT AND NO CHAIN")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want parser adaptation error")
+	}
+
+	var adaptationErr *uniquedialect.ParserAdaptationError
+	if !errors.As(err, &adaptationErr) {
+		t.Fatalf("Translate() error = %T, want *ParserAdaptationError", err)
+	}
+	if adaptationErr.StatementKind != "commit" {
+		t.Fatalf("ParserAdaptationError.StatementKind = %q, want %q", adaptationErr.StatementKind, "commit")
+	}
+	if adaptationErr.Status != "recognized_unadapted" {
+		t.Fatalf("ParserAdaptationError.Status = %q, want %q", adaptationErr.Status, "recognized_unadapted")
+	}
+}
+
 func TestTranslatorTranslatesMySQLRollbackToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
@@ -687,6 +715,34 @@ func TestTranslatorTranslatesMySQLRollbackToPostgresViaParserHooks(t *testing.T)
 
 	if result.SQL != "ROLLBACK" {
 		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, "ROLLBACK")
+	}
+}
+
+func TestTranslatorBlocksMySQLRollbackNoReleaseToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "ROLLBACK NO RELEASE")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want parser adaptation error")
+	}
+
+	var adaptationErr *uniquedialect.ParserAdaptationError
+	if !errors.As(err, &adaptationErr) {
+		t.Fatalf("Translate() error = %T, want *ParserAdaptationError", err)
+	}
+	if adaptationErr.StatementKind != "rollback" {
+		t.Fatalf("ParserAdaptationError.StatementKind = %q, want %q", adaptationErr.StatementKind, "rollback")
+	}
+	if adaptationErr.Status != "recognized_unadapted" {
+		t.Fatalf("ParserAdaptationError.Status = %q, want %q", adaptationErr.Status, "recognized_unadapted")
 	}
 }
 

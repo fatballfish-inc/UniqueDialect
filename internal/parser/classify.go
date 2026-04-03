@@ -12,6 +12,8 @@ var (
 	setTransactionReadModePattern                 = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 	setGlobalTransactionReadModePattern           = regexp.MustCompile(`(?is)^\s*SET\s+GLOBAL\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 	startTransactionWithConsistentSnapshotPattern = regexp.MustCompile(`(?is)^\s*START\s+TRANSACTION\s+WITH\s+CONSISTENT\s+SNAPSHOT\s*;?\s*$`)
+	commitDefaultCompletionVariantPattern         = regexp.MustCompile(`(?is)^\s*COMMIT\s+(AND\s+NO\s+CHAIN(?:\s+NO\s+RELEASE)?|NO\s+RELEASE)\s*;?\s*$`)
+	rollbackDefaultCompletionVariantPattern       = regexp.MustCompile(`(?is)^\s*ROLLBACK\s+(AND\s+NO\s+CHAIN(?:\s+NO\s+RELEASE)?|NO\s+RELEASE)\s*;?\s*$`)
 )
 
 func nativeNodeType(node any) string {
@@ -76,11 +78,17 @@ func classifyTiDBStatement(sql string, node tidbast.StmtNode) (StatementKind, Su
 	case *tidbast.BeginStmt:
 		return classifyTiDBBeginStatement(sql, value)
 	case *tidbast.CommitStmt:
+		if commitDefaultCompletionVariantPattern.MatchString(sql) {
+			return StatementKindCommit, SupportStatusRecognizedUnadapted
+		}
 		if value.CompletionType != tidbast.CompletionTypeDefault {
 			return StatementKindCommit, SupportStatusRecognizedUnadapted
 		}
 		return StatementKindCommit, SupportStatusSupported
 	case *tidbast.RollbackStmt:
+		if rollbackDefaultCompletionVariantPattern.MatchString(sql) {
+			return StatementKindRollback, SupportStatusRecognizedUnadapted
+		}
 		if value.CompletionType != tidbast.CompletionTypeDefault {
 			return StatementKindRollback, SupportStatusRecognizedUnadapted
 		}
