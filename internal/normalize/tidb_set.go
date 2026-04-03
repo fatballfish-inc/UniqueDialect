@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	normalizeSetSessionTransactionReadModePattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
-	normalizeSetTransactionReadModePattern        = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	normalizeSetSessionTransactionReadModePattern  = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	normalizeSetTransactionReadModePattern         = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	normalizeSetSessionTxReadOnlyAssignmentPattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+tx_read_only\s*=\s*[01]\s*;?\s*$`)
 )
 
 func normalizeTiDBSet(sql string, stmt *tidbast.SetStmt) (ir.Statement, error) {
@@ -116,6 +117,8 @@ func normalizeTiDBTransactionIsolationLevel(value tidbast.ExprNode) (string, err
 
 func normalizeTiDBTransactionReadModeScope(sql string) (string, error) {
 	switch {
+	case normalizeSetSessionTxReadOnlyAssignmentPattern.MatchString(sql):
+		return "session", nil
 	case normalizeSetSessionTransactionReadModePattern.MatchString(sql):
 		return "session", nil
 	case normalizeSetTransactionReadModePattern.MatchString(sql):
@@ -132,7 +135,11 @@ func normalizeTiDBTransactionReadMode(value tidbast.ExprNode) (string, error) {
 
 	raw := ""
 	if valueExpr, ok := value.(tidbast.ValueExpr); ok {
-		raw = valueExpr.GetString()
+		if direct := valueExpr.GetValue(); direct != nil {
+			raw = fmt.Sprint(direct)
+		} else {
+			raw = valueExpr.GetString()
+		}
 	} else {
 		raw = tiDBNodeText(value)
 	}

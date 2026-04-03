@@ -155,6 +155,22 @@ func TestParseOneClassifiesSetSessionTransactionReadWriteAsSupported(t *testing.
 	}
 }
 
+func TestParseOneClassifiesSetSessionTxReadOnlyAssignmentAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET SESSION tx_read_only = 1",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesSetGlobalTransactionReadOnlyAsRecognizedUnadapted(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SET GLOBAL TRANSACTION READ ONLY",
@@ -890,6 +906,22 @@ func TestParseOneClassifiesShowFullColumnsWhereFieldAsSupported(t *testing.T) {
 func TestParseOneClassifiesShowIndexAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW INDEX FROM `users`",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowIndexInDatabaseAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW INDEX FROM `users` IN `appdb`",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {
