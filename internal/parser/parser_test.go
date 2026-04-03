@@ -647,6 +647,38 @@ func TestParseOneClassifiesShowFullTablesLikeAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowFullTablesWhereTableTypeAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW FULL TABLES WHERE Table_type = 'VIEW'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowTablesInDatabaseWhereTableNameAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW TABLES IN `appdb` WHERE Tables_in_appdb = 'users'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowDatabasesLikeAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW DATABASES LIKE 'app%'",
@@ -682,6 +714,22 @@ func TestParseOneClassifiesShowDatabasesWhereAsSupported(t *testing.T) {
 func TestParseOneClassifiesShowSessionVariablesLikeAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW SESSION VARIABLES LIKE 'client_%'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowVariablesWhereAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW VARIABLES WHERE Variable_name = 'client_encoding'",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {
@@ -791,9 +839,41 @@ func TestParseOneClassifiesShowColumnsLikeAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowColumnsWhereFieldAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW COLUMNS FROM `users` WHERE Field = 'id'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowFullColumnsLikeAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW FULL COLUMNS FROM `users` LIKE 'id%'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowFullColumnsWhereFieldAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW FULL COLUMNS FROM `users` WHERE Field = 'id'",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {
@@ -842,6 +922,22 @@ func TestParseOneClassifiesShowTableStatusAsSupported(t *testing.T) {
 func TestParseOneClassifiesShowTableStatusLikeAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW TABLE STATUS LIKE 'user%'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesShowTableStatusWhereNameAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW TABLE STATUS WHERE Name = 'users'",
 		uniquedialect.DialectMySQL,
 	)
 	if err != nil {
