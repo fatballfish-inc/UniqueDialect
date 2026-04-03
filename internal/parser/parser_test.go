@@ -354,6 +354,19 @@ func TestParseOneClassifiesBeginPessimisticAsRecognizedUnadapted(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesStartTransactionWithConsistentSnapshotAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne("START TRANSACTION WITH CONSISTENT SNAPSHOT", uniquedialect.DialectMySQL)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindBegin {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindBegin)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneClassifiesCommitAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne("COMMIT", uniquedialect.DialectMySQL)
 	if err != nil {

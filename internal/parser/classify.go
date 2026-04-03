@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	setSessionTransactionReadModePattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
-	setTransactionReadModePattern        = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
-	setGlobalTransactionReadModePattern  = regexp.MustCompile(`(?is)^\s*SET\s+GLOBAL\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	setSessionTransactionReadModePattern          = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	setTransactionReadModePattern                 = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	setGlobalTransactionReadModePattern           = regexp.MustCompile(`(?is)^\s*SET\s+GLOBAL\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	startTransactionWithConsistentSnapshotPattern = regexp.MustCompile(`(?is)^\s*START\s+TRANSACTION\s+WITH\s+CONSISTENT\s+SNAPSHOT\s*;?\s*$`)
 )
 
 func nativeNodeType(node any) string {
@@ -73,7 +74,7 @@ func classifyTiDBStatement(sql string, node tidbast.StmtNode) (StatementKind, Su
 	case *tidbast.DropIndexStmt:
 		return StatementKindDropIndex, SupportStatusSupported
 	case *tidbast.BeginStmt:
-		return classifyTiDBBeginStatement(value)
+		return classifyTiDBBeginStatement(sql, value)
 	case *tidbast.CommitStmt:
 		if value.CompletionType != tidbast.CompletionTypeDefault {
 			return StatementKindCommit, SupportStatusRecognizedUnadapted
@@ -124,9 +125,12 @@ func classifyTiDBSetStatement(sql string, stmt *tidbast.SetStmt) (StatementKind,
 	}
 }
 
-func classifyTiDBBeginStatement(stmt *tidbast.BeginStmt) (StatementKind, SupportStatus) {
+func classifyTiDBBeginStatement(sql string, stmt *tidbast.BeginStmt) (StatementKind, SupportStatus) {
 	if stmt == nil {
 		return StatementKindBegin, SupportStatusSupported
+	}
+	if startTransactionWithConsistentSnapshotPattern.MatchString(sql) {
+		return StatementKindBegin, SupportStatusRecognizedUnadapted
 	}
 	if stmt.Mode != "" || stmt.CausalConsistencyOnly || stmt.AsOf != nil {
 		return StatementKindBegin, SupportStatusRecognizedUnadapted
