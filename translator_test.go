@@ -1547,6 +1547,28 @@ func TestTranslatorTranslatesMySQLShowFullTablesInDatabaseWhereTableNameToPostgr
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowFullTablesInDatabaseWhereTableTypeToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW FULL TABLES IN `appdb` WHERE Table_type = 'VIEW'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT table_name AS "Tables_in_appdb", CASE WHEN table_type = 'VIEW' THEN 'VIEW' ELSE 'BASE TABLE' END AS "Table_type" FROM information_schema.tables WHERE table_schema = 'appdb' AND table_type IN ('BASE TABLE', 'VIEW') AND table_type = 'VIEW' ORDER BY table_name`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowDatabasesLikeToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
@@ -1653,6 +1675,28 @@ func TestTranslatorTranslatesMySQLShowVariablesWhereToPostgresViaParserHooks(t *
 	}
 
 	result, err := translator.Translate(context.Background(), "SHOW VARIABLES WHERE Variable_name = 'client_encoding'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT name AS "Variable_name", setting AS "Value" FROM pg_catalog.pg_settings WHERE name = 'client_encoding' ORDER BY name`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLShowSessionVariablesWhereToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW SESSION VARIABLES WHERE Variable_name = 'client_encoding'")
 	if err != nil {
 		t.Fatalf("Translate() error = %v", err)
 	}
