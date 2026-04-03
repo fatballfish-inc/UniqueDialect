@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatballfish/uniquedialect/internal/ir"
 	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+	tidbopcode "github.com/fatballfish/uniquedialect/internal/parser/tidb/opcode"
 )
 
 func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
@@ -64,8 +65,9 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Database: database,
 		}, nil
 	case tidbast.ShowTableStatus:
-		if stmt.Where != nil {
-			return nil, fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+		name, err := normalizeTiDBShowTableStatusWhere(stmt.Where)
+		if err != nil {
+			return nil, err
 		}
 		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW TABLE STATUS")
 		if err != nil {
@@ -74,6 +76,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		return ir.ShowTableStatusStatement{
 			Database: strings.TrimSpace(stmt.DBName),
 			Pattern:  pattern,
+			Name:     name,
 		}, nil
 	case tidbast.ShowDatabases:
 		if stmt.Where != nil {
@@ -136,4 +139,27 @@ func normalizeTiDBShowLikePattern(pattern *tidbast.PatternLikeOrIlikeExpr, label
 	}
 
 	return valueExpr.GetString(), nil
+}
+
+func normalizeTiDBShowTableStatusWhere(where tidbast.ExprNode) (string, error) {
+	if where == nil {
+		return "", nil
+	}
+
+	binary, ok := where.(*tidbast.BinaryOperationExpr)
+	if !ok || binary.Op != tidbopcode.EQ {
+		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+	}
+
+	columnExpr, ok := binary.L.(*tidbast.ColumnNameExpr)
+	if !ok || columnExpr.Name == nil || !strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Name") {
+		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+	}
+
+	valueExpr, ok := binary.R.(tidbast.ValueExpr)
+	if !ok {
+		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+	}
+
+	return strings.TrimSpace(valueExpr.GetString()), nil
 }

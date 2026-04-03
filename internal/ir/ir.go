@@ -134,6 +134,7 @@ func (ShowIndexStatement) statementNode() {}
 type ShowTableStatusStatement struct {
 	Database string
 	Pattern  string
+	Name     string
 }
 
 func (ShowTableStatusStatement) statementNode() {}
