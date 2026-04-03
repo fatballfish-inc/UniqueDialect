@@ -551,12 +551,17 @@ func renderShowVariables(stmt ir.ShowVariablesStatement, to string) (string, err
 		sql := "SELECT name AS " + quoteIdentifierChain("Variable_name", to) +
 			", setting AS " + quoteIdentifierChain("Value", to) +
 			" FROM pg_catalog.pg_settings"
-		if stmt.Pattern != "" {
+		if stmt.Name != "" {
+			sql += " WHERE name = " + quoteStringLiteral(stmt.Name)
+		} else if stmt.Pattern != "" {
 			sql += " WHERE name ILIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		sql += " ORDER BY name"
 		return sql, nil
 	case "mysql":
+		if stmt.Name != "" {
+			return "SHOW VARIABLES WHERE Variable_name = " + quoteStringLiteral(stmt.Name), nil
+		}
 		if stmt.Pattern == "" {
 			return "SHOW VARIABLES", nil
 		}

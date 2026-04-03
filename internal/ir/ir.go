@@ -173,6 +173,7 @@ func (ShowCreateViewStatement) statementNode() {}
 // ShowVariablesStatement is the normalized SHOW VARIABLES statement.
 type ShowVariablesStatement struct {
 	Pattern string
+	Name    string
 }
 
 func (ShowVariablesStatement) statementNode() {}

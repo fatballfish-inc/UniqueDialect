@@ -1553,7 +1553,7 @@ func TestTranslatorBlocksUnadaptedMySQLShowGlobalVariablesToPostgresViaParserHoo
 	}
 }
 
-func TestTranslatorRejectsUnsupportedMySQLShowVariablesWhereToPostgresViaParserHooks(t *testing.T) {
+func TestTranslatorTranslatesMySQLShowVariablesWhereToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
 	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
@@ -1564,12 +1564,14 @@ func TestTranslatorRejectsUnsupportedMySQLShowVariablesWhereToPostgresViaParserH
 		t.Fatalf("NewTranslator() error = %v", err)
 	}
 
-	_, err = translator.Translate(context.Background(), "SHOW VARIABLES WHERE Variable_name = 'client_encoding'")
-	if err == nil {
-		t.Fatalf("Translate() error = nil, want unsupported SHOW VARIABLES variant error")
+	result, err := translator.Translate(context.Background(), "SHOW VARIABLES WHERE Variable_name = 'client_encoding'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "unsupported SHOW VARIABLES variant") {
-		t.Fatalf("Translate() error = %v, want unsupported SHOW VARIABLES variant error", err)
+
+	want := `SELECT name AS "Variable_name", setting AS "Value" FROM pg_catalog.pg_settings WHERE name = 'client_encoding' ORDER BY name`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
 	}
 }
 

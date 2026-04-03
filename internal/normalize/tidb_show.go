@@ -112,14 +112,18 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Name:   strings.TrimSpace(stmt.Table.Name.O),
 		}, nil
 	case tidbast.ShowVariables:
-		if stmt.GlobalScope || stmt.Where != nil {
+		if stmt.GlobalScope {
 			return nil, fmt.Errorf("unsupported SHOW VARIABLES variant")
 		}
 		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW VARIABLES")
 		if err != nil {
 			return nil, err
 		}
-		return ir.ShowVariablesStatement{Pattern: pattern}, nil
+		name, err := normalizeTiDBShowVariablesWhere(stmt.Where)
+		if err != nil {
+			return nil, err
+		}
+		return ir.ShowVariablesStatement{Pattern: pattern, Name: name}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SHOW statement type %v", stmt.Tp)
 	}
@@ -159,6 +163,29 @@ func normalizeTiDBShowTableStatusWhere(where tidbast.ExprNode) (string, error) {
 	valueExpr, ok := binary.R.(tidbast.ValueExpr)
 	if !ok {
 		return "", fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+	}
+
+	return strings.TrimSpace(valueExpr.GetString()), nil
+}
+
+func normalizeTiDBShowVariablesWhere(where tidbast.ExprNode) (string, error) {
+	if where == nil {
+		return "", nil
+	}
+
+	binary, ok := where.(*tidbast.BinaryOperationExpr)
+	if !ok || binary.Op != tidbopcode.EQ {
+		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
+	}
+
+	columnExpr, ok := binary.L.(*tidbast.ColumnNameExpr)
+	if !ok || columnExpr.Name == nil || !strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Variable_name") {
+		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
+	}
+
+	valueExpr, ok := binary.R.(tidbast.ValueExpr)
+	if !ok {
+		return "", fmt.Errorf("unsupported SHOW VARIABLES variant")
 	}
 
 	return strings.TrimSpace(valueExpr.GetString()), nil
