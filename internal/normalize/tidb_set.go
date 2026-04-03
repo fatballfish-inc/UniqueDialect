@@ -12,7 +12,7 @@ import (
 var (
 	normalizeSetSessionTransactionReadModePattern  = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 	normalizeSetTransactionReadModePattern         = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
-	normalizeSetSessionTxReadOnlyAssignmentPattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+tx_read_only\s*=\s*[01]\s*;?\s*$`)
+	normalizeSetSessionTxReadOnlyAssignmentPattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+tx_read_only\s*=\s*(?:[01]|ON|OFF|TRUE|FALSE)\s*;?\s*$`)
 )
 
 func normalizeTiDBSet(sql string, stmt *tidbast.SetStmt) (ir.Statement, error) {
@@ -145,10 +145,10 @@ func normalizeTiDBTransactionReadMode(value tidbast.ExprNode) (string, error) {
 	}
 
 	mode := strings.Trim(strings.TrimSpace(raw), "`'\" ")
-	switch mode {
-	case "0":
+	switch strings.ToUpper(mode) {
+	case "0", "OFF", "FALSE":
 		return "READ WRITE", nil
-	case "1":
+	case "1", "ON", "TRUE":
 		return "READ ONLY", nil
 	default:
 		return "", fmt.Errorf("unsupported SET transaction access mode %s", mode)
