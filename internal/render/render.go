@@ -282,10 +282,16 @@ func renderShowTables(stmt ir.ShowTablesStatement, to string) (string, error) {
 		if stmt.Full {
 			selectClause += ", CASE WHEN table_type = 'VIEW' THEN 'VIEW' ELSE 'BASE TABLE' END AS " + quoteIdentifierChain("Table_type", to)
 		}
-		return selectClause +
+		sql := selectClause +
 			" FROM information_schema.tables WHERE table_schema = " + schemaExpr +
-			" AND table_type IN ('BASE TABLE', 'VIEW')" + renderShowTablesPattern(stmt.Pattern) +
-			" ORDER BY table_name", nil
+			" AND table_type IN ('BASE TABLE', 'VIEW')"
+		if stmt.TableType != "" {
+			sql += " AND table_type = " + quoteStringLiteral(stmt.TableType)
+		} else {
+			sql += renderShowTablesPattern(stmt.Pattern)
+		}
+		sql += " ORDER BY table_name"
+		return sql, nil
 	case "mysql":
 		sql := "SHOW "
 		if stmt.Full {
@@ -295,7 +301,9 @@ func renderShowTables(stmt ir.ShowTablesStatement, to string) (string, error) {
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
 		}
-		if stmt.Pattern != "" {
+		if stmt.TableType != "" {
+			sql += " WHERE Table_type = " + quoteStringLiteral(stmt.TableType)
+		} else if stmt.Pattern != "" {
 			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		return sql, nil

@@ -108,6 +108,7 @@ type ShowTablesStatement struct {
 	Database string
 	Full     bool
 	Pattern  string
+	TableType string
 }
 
 func (ShowTablesStatement) statementNode() {}
