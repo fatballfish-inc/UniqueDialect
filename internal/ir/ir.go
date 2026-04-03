@@ -124,6 +124,7 @@ func (ShowIndexStatement) statementNode() {}
 // ShowTableStatusStatement is the normalized SHOW TABLE STATUS statement.
 type ShowTableStatusStatement struct {
 	Database string
+	Pattern  string
 }
 
 func (ShowTableStatusStatement) statementNode() {}

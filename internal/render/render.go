@@ -391,11 +391,15 @@ func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string,
 			", NULL AS " + quoteIdentifierChain("Create_options", to) +
 			", COALESCE(obj_description(c.oid, 'pg_class'), '') AS " + quoteIdentifierChain("Comment", to) +
 			" FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_am am ON am.oid = c.relam WHERE c.relkind IN ('r', 'p') AND " + schemaPredicate +
+			renderShowTableStatusPattern(stmt.Pattern) +
 			" ORDER BY c.relname", nil
 	case "mysql":
 		sql := "SHOW TABLE STATUS"
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
+		}
+		if stmt.Pattern != "" {
+			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		return sql, nil
 	default:
@@ -428,6 +432,13 @@ func renderShowTablesPattern(pattern string) string {
 		return ""
 	}
 	return " AND table_name ILIKE " + quoteStringLiteral(pattern)
+}
+
+func renderShowTableStatusPattern(pattern string) string {
+	if pattern == "" {
+		return ""
+	}
+	return " AND c.relname ILIKE " + quoteStringLiteral(pattern)
 }
 
 func renderShowCreateDatabase(stmt ir.ShowCreateDatabaseStatement, to string) (string, error) {

@@ -64,11 +64,16 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Database: database,
 		}, nil
 	case tidbast.ShowTableStatus:
-		if stmt.Pattern != nil || stmt.Where != nil {
+		if stmt.Where != nil {
 			return nil, fmt.Errorf("unsupported SHOW TABLE STATUS variant")
+		}
+		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW TABLE STATUS")
+		if err != nil {
+			return nil, err
 		}
 		return ir.ShowTableStatusStatement{
 			Database: strings.TrimSpace(stmt.DBName),
+			Pattern:  pattern,
 		}, nil
 	case tidbast.ShowDatabases:
 		if stmt.Where != nil {
