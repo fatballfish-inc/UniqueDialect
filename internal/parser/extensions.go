@@ -13,6 +13,8 @@ var mariaDBDropForeignKeyIfExistsInlinePattern = regexp.MustCompile(`(?i)\bDROP\
 var mariaDBDropPrimaryKeyIfExistsInlinePattern = regexp.MustCompile(`(?i)\bDROP\s+PRIMARY\s+KEY\s+IF\s+EXISTS\b`)
 var mariaDBDropIndexIfExistsInlinePattern = regexp.MustCompile(`(?i)\bDROP\s+(?:INDEX|KEY)\s+IF\s+EXISTS\b`)
 var mariaDBAddUniqueKeyIfNotExistsInlinePattern = regexp.MustCompile(`(?i)\bADD\s+UNIQUE\s+(?:KEY|INDEX)\s+IF\s+NOT\s+EXISTS\b`)
+var showDatabasesWhereDatabasePattern = regexp.MustCompile(`(?is)^\s*SHOW\s+DATABASES\s+WHERE\s+DATABASE\s*=`)
+var showDatabasesWhereDatabaseInlinePattern = regexp.MustCompile(`(?i)\bWHERE\s+DATABASE\b`)
 
 // MariaDBDropForeignKeyStmt captures a MariaDB-only ALTER TABLE extension not accepted by TiDB parser.
 type MariaDBDropForeignKeyStmt struct {
@@ -22,10 +24,32 @@ type MariaDBDropForeignKeyStmt struct {
 }
 
 func parseMariaDBExtensionStatement(sql, dialect string) ([]*ParsedStatement, bool) {
+	if parsed, ok := parseShowDatabasesWhereDatabaseExtension(sql, dialect); ok {
+		return parsed, true
+	}
 	if parsed, ok := parseStandaloneMariaDBDropForeignKeyIfExists(sql, dialect); ok {
 		return parsed, true
 	}
 	return parseMariaDBDropForeignKeyIfExistsAlterTableBatch(sql, dialect)
+}
+
+func parseShowDatabasesWhereDatabaseExtension(sql, dialect string) ([]*ParsedStatement, bool) {
+	if !showDatabasesWhereDatabasePattern.MatchString(sql) {
+		return nil, false
+	}
+
+	sanitized := showDatabasesWhereDatabaseInlinePattern.ReplaceAllString(sql, "WHERE `Database`")
+	nodes, err := adapter.ParseTiDBStatements(sanitized)
+	if err != nil || len(nodes) != 1 {
+		return nil, false
+	}
+
+	showStmt, ok := nodes[0].(*tidbast.ShowStmt)
+	if !ok || showStmt.Tp != tidbast.ShowDatabases || showStmt.Where == nil {
+		return nil, false
+	}
+
+	return wrapTiDBStatements(sql, dialect, nodes), true
 }
 
 func parseStandaloneMariaDBDropForeignKeyIfExists(sql, dialect string) ([]*ParsedStatement, bool) {

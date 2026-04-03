@@ -447,12 +447,17 @@ func renderShowDatabases(stmt ir.ShowDatabasesStatement, to string) (string, err
 	case "postgres":
 		sql := "SELECT datname AS " + quoteIdentifierChain("Database", to) +
 			" FROM pg_database WHERE datistemplate = false"
-		if stmt.Pattern != "" {
+		if stmt.Name != "" {
+			sql += " AND datname = " + quoteStringLiteral(stmt.Name)
+		} else if stmt.Pattern != "" {
 			sql += " AND datname ILIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		sql += " ORDER BY datname"
 		return sql, nil
 	case "mysql":
+		if stmt.Name != "" {
+			return "SHOW DATABASES WHERE Database = " + quoteStringLiteral(stmt.Name), nil
+		}
 		if stmt.Pattern == "" {
 			return "SHOW DATABASES", nil
 		}

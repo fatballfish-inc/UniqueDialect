@@ -1503,6 +1503,28 @@ func TestTranslatorTranslatesMySQLShowDatabasesLikeToPostgresViaParserHooks(t *t
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowDatabasesWhereToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW DATABASES WHERE Database = 'appdb'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT datname AS "Database" FROM pg_database WHERE datistemplate = false AND datname = 'appdb' ORDER BY datname`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowSessionVariablesLikeToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 

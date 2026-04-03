@@ -663,6 +663,22 @@ func TestParseOneClassifiesShowDatabasesLikeAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowDatabasesWhereAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW DATABASES WHERE Database = 'appdb'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowSessionVariablesLikeAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW SESSION VARIABLES LIKE 'client_%'",

@@ -142,6 +142,7 @@ func (ShowTableStatusStatement) statementNode() {}
 // ShowDatabasesStatement is the normalized SHOW DATABASES statement.
 type ShowDatabasesStatement struct {
 	Pattern string
+	Name    string
 }
 
 func (ShowDatabasesStatement) statementNode() {}
