@@ -405,6 +405,7 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			" AND " + visibilityPredicate +
 			renderShowIndexKeyName(stmt.KeyName) +
 			renderShowIndexColumn(stmt.Column) +
+			renderShowIndexType(stmt.IndexType) +
 			" AND k.ordinality <= ix.indnkeyatts" +
 			" ORDER BY i.relname, k.ordinality", nil
 	case "mysql":
@@ -416,6 +417,8 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			sql += " WHERE Key_name = " + quoteStringLiteral(stmt.KeyName)
 		} else if stmt.Column != "" {
 			sql += " WHERE Column_name = " + quoteStringLiteral(stmt.Column)
+		} else if stmt.IndexType != "" {
+			sql += " WHERE Index_type = " + quoteStringLiteral(stmt.IndexType)
 		}
 		return sql, nil
 	default:
@@ -437,6 +440,14 @@ func renderShowIndexColumn(column string) string {
 	}
 
 	return " AND a.attname = " + quoteStringLiteral(strings.TrimSpace(column))
+}
+
+func renderShowIndexType(indexType string) string {
+	if strings.TrimSpace(indexType) == "" {
+		return ""
+	}
+
+	return " AND lower(am.amname) = lower(" + quoteStringLiteral(strings.TrimSpace(indexType)) + ")"
 }
 
 func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string, error) {

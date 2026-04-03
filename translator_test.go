@@ -2141,6 +2141,28 @@ func TestTranslatorTranslatesMySQLShowIndexWhereColumnNameToPostgresViaParserHoo
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowIndexWhereIndexTypeToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW INDEX FROM `users` WHERE Index_type = 'BTREE'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT t.relname AS "Table", CASE WHEN ix.indisunique THEN 0 ELSE 1 END AS "Non_unique", i.relname AS "Key_name", k.ordinality AS "Seq_in_index", CASE WHEN k.attnum = 0 THEN NULL ELSE a.attname END AS "Column_name", 'A' AS "Collation", NULL AS "Cardinality", NULL AS "Sub_part", NULL AS "Packed", CASE WHEN a.attnotnull THEN '' ELSE 'YES' END AS "Null", am.amname AS "Index_type", '' AS "Comment", '' AS "Index_comment", 'YES' AS "Visible", CASE WHEN k.attnum = 0 THEN pg_get_indexdef(ix.indexrelid, k.ordinality, true) ELSE NULL END AS "Expression" FROM pg_index ix JOIN pg_class t ON t.oid = ix.indrelid JOIN pg_class i ON i.oid = ix.indexrelid JOIN pg_am am ON am.oid = i.relam JOIN pg_namespace n ON n.oid = t.relnamespace JOIN LATERAL unnest(string_to_array(ix.indkey::text, ' ')::smallint[]) WITH ORDINALITY AS k(attnum, ordinality) ON TRUE LEFT JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum WHERE t.relkind IN ('r', 'p') AND t.relname = 'users' AND pg_table_is_visible(t.oid) AND lower(am.amname) = lower('BTREE') AND k.ordinality <= ix.indnkeyatts ORDER BY i.relname, k.ordinality`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowTableStatusToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
