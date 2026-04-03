@@ -1503,6 +1503,28 @@ func TestTranslatorTranslatesMySQLShowTablesInDatabaseLikeToPostgresViaParserHoo
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowTablesInDatabaseWhereTableNameToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW TABLES IN `appdb` WHERE Tables_in_appdb = 'users'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT table_name AS "Tables_in_appdb" FROM information_schema.tables WHERE table_schema = 'appdb' AND table_type IN ('BASE TABLE', 'VIEW') AND table_name = 'users' ORDER BY table_name`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowDatabasesLikeToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 

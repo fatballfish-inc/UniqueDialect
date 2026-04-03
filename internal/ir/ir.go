@@ -105,9 +105,10 @@ func (UseStatement) statementNode() {}
 
 // ShowTablesStatement is the normalized SHOW TABLES statement.
 type ShowTablesStatement struct {
-	Database string
-	Full     bool
-	Pattern  string
+	Database  string
+	Full      bool
+	Pattern   string
+	Name      string
 	TableType string
 }
 

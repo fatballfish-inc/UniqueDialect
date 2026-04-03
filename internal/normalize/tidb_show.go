@@ -16,14 +16,11 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 
 	switch stmt.Tp {
 	case tidbast.ShowTables:
-		if stmt.Where != nil && !stmt.Full {
-			return nil, fmt.Errorf("unsupported SHOW TABLES variant")
-		}
 		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW TABLES")
 		if err != nil {
 			return nil, err
 		}
-		tableType, err := normalizeTiDBShowFullTablesWhere(stmt.Full, stmt.Where)
+		name, tableType, err := normalizeTiDBShowTablesWhere(strings.TrimSpace(stmt.DBName), stmt.Full, stmt.Where)
 		if err != nil {
 			return nil, err
 		}
@@ -31,6 +28,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Database:  strings.TrimSpace(stmt.DBName),
 			Full:      stmt.Full,
 			Pattern:   pattern,
+			Name:      name,
 			TableType: tableType,
 		}, nil
 	case tidbast.ShowColumns:
@@ -248,28 +246,38 @@ func normalizeTiDBShowColumnsWhere(where tidbast.ExprNode) (string, error) {
 	return strings.TrimSpace(valueExpr.GetString()), nil
 }
 
-func normalizeTiDBShowFullTablesWhere(full bool, where tidbast.ExprNode) (string, error) {
+func normalizeTiDBShowTablesWhere(database string, full bool, where tidbast.ExprNode) (string, string, error) {
 	if where == nil {
-		return "", nil
-	}
-	if !full {
-		return "", fmt.Errorf("unsupported SHOW TABLES variant")
+		return "", "", nil
 	}
 
 	binary, ok := where.(*tidbast.BinaryOperationExpr)
 	if !ok || binary.Op != tidbopcode.EQ {
-		return "", fmt.Errorf("unsupported SHOW TABLES variant")
+		return "", "", fmt.Errorf("unsupported SHOW TABLES variant")
 	}
 
 	columnExpr, ok := binary.L.(*tidbast.ColumnNameExpr)
-	if !ok || columnExpr.Name == nil || !strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Table_type") {
-		return "", fmt.Errorf("unsupported SHOW TABLES variant")
+	if !ok || columnExpr.Name == nil {
+		return "", "", fmt.Errorf("unsupported SHOW TABLES variant")
 	}
 
 	valueExpr, ok := binary.R.(tidbast.ValueExpr)
 	if !ok {
-		return "", fmt.Errorf("unsupported SHOW TABLES variant")
+		return "", "", fmt.Errorf("unsupported SHOW TABLES variant")
 	}
 
-	return strings.TrimSpace(valueExpr.GetString()), nil
+	columnName := strings.TrimSpace(columnExpr.Name.Name.O)
+	if full && strings.EqualFold(columnName, "Table_type") {
+		return "", strings.TrimSpace(valueExpr.GetString()), nil
+	}
+
+	expectedNameColumn := "Tables_in_current_schema"
+	if strings.TrimSpace(database) != "" {
+		expectedNameColumn = "Tables_in_" + strings.TrimSpace(database)
+	}
+	if strings.EqualFold(columnName, expectedNameColumn) {
+		return strings.TrimSpace(valueExpr.GetString()), "", nil
+	}
+
+	return "", "", fmt.Errorf("unsupported SHOW TABLES variant")
 }

@@ -285,7 +285,9 @@ func renderShowTables(stmt ir.ShowTablesStatement, to string) (string, error) {
 		sql := selectClause +
 			" FROM information_schema.tables WHERE table_schema = " + schemaExpr +
 			" AND table_type IN ('BASE TABLE', 'VIEW')"
-		if stmt.TableType != "" {
+		if stmt.Name != "" {
+			sql += " AND table_name = " + quoteStringLiteral(stmt.Name)
+		} else if stmt.TableType != "" {
 			sql += " AND table_type = " + quoteStringLiteral(stmt.TableType)
 		} else {
 			sql += renderShowTablesPattern(stmt.Pattern)
@@ -301,7 +303,13 @@ func renderShowTables(stmt ir.ShowTablesStatement, to string) (string, error) {
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
 		}
-		if stmt.TableType != "" {
+		if stmt.Name != "" {
+			columnName := "Tables_in_current_schema"
+			if strings.TrimSpace(stmt.Database) != "" {
+				columnName = "Tables_in_" + strings.TrimSpace(stmt.Database)
+			}
+			sql += " WHERE " + quoteIdentifierChain(columnName, to) + " = " + quoteStringLiteral(stmt.Name)
+		} else if stmt.TableType != "" {
 			sql += " WHERE Table_type = " + quoteStringLiteral(stmt.TableType)
 		} else if stmt.Pattern != "" {
 			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
