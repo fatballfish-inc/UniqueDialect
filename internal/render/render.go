@@ -214,12 +214,24 @@ func renderSetTransaction(stmt ir.SetTransactionStatement, to string) (string, e
 	switch to {
 	case "postgres":
 		if stmt.Scope == "transaction" {
+			if stmt.AccessMode != "" {
+				return "SET TRANSACTION " + stmt.AccessMode, nil
+			}
 			return "SET TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
+		}
+		if stmt.AccessMode != "" {
+			return "SET SESSION CHARACTERISTICS AS TRANSACTION " + stmt.AccessMode, nil
 		}
 		return "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
 	case "mysql":
 		if stmt.Scope == "transaction" {
+			if stmt.AccessMode != "" {
+				return "SET TRANSACTION " + stmt.AccessMode, nil
+			}
 			return "SET TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
+		}
+		if stmt.AccessMode != "" {
+			return "SET SESSION TRANSACTION " + stmt.AccessMode, nil
 		}
 		return "SET SESSION TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
 	default:

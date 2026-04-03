@@ -70,6 +70,7 @@ func (SetStatement) statementNode() {}
 type SetTransactionStatement struct {
 	Scope          string
 	IsolationLevel string
+	AccessMode     string
 }
 
 func (SetTransactionStatement) statementNode() {}

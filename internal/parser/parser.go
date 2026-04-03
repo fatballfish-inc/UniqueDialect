@@ -47,7 +47,7 @@ func ParseMulti[D ~string](sql string, dialect D) ([]*ParsedStatement, error) {
 func wrapTiDBStatements(sql, dialect string, nodes []tidbast.StmtNode) []*ParsedStatement {
 	statements := make([]*ParsedStatement, 0, len(nodes))
 	for _, node := range nodes {
-		kind, status := classifyTiDBStatement(node)
+		kind, status := classifyTiDBStatement(sql, node)
 		statements = append(statements, &ParsedStatement{
 			SQL:            sql,
 			SourceDialect:  dialect,

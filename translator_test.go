@@ -1078,6 +1078,78 @@ func TestTranslatorTranslatesMySQLSetSessionTransactionIsolationLevelToPostgresV
 	}
 }
 
+func TestTranslatorTranslatesMySQLSetTransactionReadOnlyToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET TRANSACTION READ ONLY")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := "SET TRANSACTION READ ONLY"
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLSetSessionTransactionReadWriteToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET SESSION TRANSACTION READ WRITE")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := "SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE"
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorBlocksMySQLSetGlobalTransactionReadOnlyToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SET GLOBAL TRANSACTION READ ONLY")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want parser adaptation error")
+	}
+
+	var adaptationErr *uniquedialect.ParserAdaptationError
+	if !errors.As(err, &adaptationErr) {
+		t.Fatalf("Translate() error = %T, want *ParserAdaptationError", err)
+	}
+	if adaptationErr.StatementKind != "set" {
+		t.Fatalf("ParserAdaptationError.StatementKind = %q, want %q", adaptationErr.StatementKind, "set")
+	}
+	if adaptationErr.Status != "recognized_unadapted" {
+		t.Fatalf("ParserAdaptationError.Status = %q, want %q", adaptationErr.Status, "recognized_unadapted")
+	}
+}
+
 func TestTranslatorBlocksMySQLSetGlobalTransactionIsolationLevelToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 

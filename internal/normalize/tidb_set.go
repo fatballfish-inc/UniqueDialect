@@ -2,13 +2,19 @@ package normalize
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/fatballfish/uniquedialect/internal/ir"
 	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
 )
 
-func normalizeTiDBSet(stmt *tidbast.SetStmt) (ir.Statement, error) {
+var (
+	normalizeSetSessionTransactionReadModePattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	normalizeSetTransactionReadModePattern        = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+)
+
+func normalizeTiDBSet(sql string, stmt *tidbast.SetStmt) (ir.Statement, error) {
 	if stmt == nil || len(stmt.Variables) != 1 || stmt.Variables[0] == nil {
 		return nil, fmt.Errorf("unsupported SET variant")
 	}
@@ -52,6 +58,19 @@ func normalizeTiDBSet(stmt *tidbast.SetStmt) (ir.Statement, error) {
 			Scope:          "session",
 			IsolationLevel: level,
 		}, nil
+	case "tx_read_only":
+		scope, err := normalizeTiDBTransactionReadModeScope(sql)
+		if err != nil {
+			return nil, err
+		}
+		mode, err := normalizeTiDBTransactionReadMode(variable.Value)
+		if err != nil {
+			return nil, err
+		}
+		return ir.SetTransactionStatement{
+			Scope:      scope,
+			AccessMode: mode,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SET variant")
 	}
@@ -92,5 +111,39 @@ func normalizeTiDBTransactionIsolationLevel(value tidbast.ExprNode) (string, err
 		return level, nil
 	default:
 		return "", fmt.Errorf("unsupported SET transaction isolation level %s", level)
+	}
+}
+
+func normalizeTiDBTransactionReadModeScope(sql string) (string, error) {
+	switch {
+	case normalizeSetSessionTransactionReadModePattern.MatchString(sql):
+		return "session", nil
+	case normalizeSetTransactionReadModePattern.MatchString(sql):
+		return "transaction", nil
+	default:
+		return "", fmt.Errorf("unsupported SET variant")
+	}
+}
+
+func normalizeTiDBTransactionReadMode(value tidbast.ExprNode) (string, error) {
+	if value == nil {
+		return "", fmt.Errorf("unsupported SET transaction access mode")
+	}
+
+	raw := ""
+	if valueExpr, ok := value.(tidbast.ValueExpr); ok {
+		raw = valueExpr.GetString()
+	} else {
+		raw = tiDBNodeText(value)
+	}
+
+	mode := strings.Trim(strings.TrimSpace(raw), "`'\" ")
+	switch mode {
+	case "0":
+		return "READ WRITE", nil
+	case "1":
+		return "READ ONLY", nil
+	default:
+		return "", fmt.Errorf("unsupported SET transaction access mode %s", mode)
 	}
 }

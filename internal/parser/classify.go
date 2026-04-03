@@ -2,15 +2,22 @@ package parser
 
 import (
 	"fmt"
+	"regexp"
 
 	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+)
+
+var (
+	setSessionTransactionReadModePattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	setTransactionReadModePattern        = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
+	setGlobalTransactionReadModePattern  = regexp.MustCompile(`(?is)^\s*SET\s+GLOBAL\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 )
 
 func nativeNodeType(node any) string {
 	return fmt.Sprintf("%T", node)
 }
 
-func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus) {
+func classifyTiDBStatement(sql string, node tidbast.StmtNode) (StatementKind, SupportStatus) {
 	switch value := node.(type) {
 	case *tidbast.SelectStmt:
 		if value.With != nil {
@@ -20,7 +27,7 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 	case *tidbast.SetOprStmt:
 		return StatementKindSetOp, SupportStatusSupported
 	case *tidbast.SetStmt:
-		return classifyTiDBSetStatement(value)
+		return classifyTiDBSetStatement(sql, value)
 	case *tidbast.InsertStmt:
 		return StatementKindInsert, SupportStatusSupported
 	case *tidbast.UpdateStmt:
@@ -88,7 +95,7 @@ func classifyTiDBStatement(node tidbast.StmtNode) (StatementKind, SupportStatus)
 	}
 }
 
-func classifyTiDBSetStatement(stmt *tidbast.SetStmt) (StatementKind, SupportStatus) {
+func classifyTiDBSetStatement(sql string, stmt *tidbast.SetStmt) (StatementKind, SupportStatus) {
 	if stmt == nil || len(stmt.Variables) != 1 || stmt.Variables[0] == nil {
 		return StatementKindSet, SupportStatusRecognizedUnadapted
 	}
@@ -103,6 +110,15 @@ func classifyTiDBSetStatement(stmt *tidbast.SetStmt) (StatementKind, SupportStat
 			return StatementKindSet, SupportStatusRecognizedUnadapted
 		}
 		return StatementKindSet, SupportStatusSupported
+	case "tx_read_only":
+		switch {
+		case setGlobalTransactionReadModePattern.MatchString(sql):
+			return StatementKindSet, SupportStatusRecognizedUnadapted
+		case setSessionTransactionReadModePattern.MatchString(sql), setTransactionReadModePattern.MatchString(sql):
+			return StatementKindSet, SupportStatusSupported
+		default:
+			return StatementKindSet, SupportStatusRecognizedUnadapted
+		}
 	default:
 		return StatementKindSet, SupportStatusRecognizedUnadapted
 	}

@@ -123,6 +123,54 @@ func TestParseOneClassifiesSetSessionTransactionIsolationLevelAsSupported(t *tes
 	}
 }
 
+func TestParseOneClassifiesSetTransactionReadOnlyAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET TRANSACTION READ ONLY",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesSetSessionTransactionReadWriteAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET SESSION TRANSACTION READ WRITE",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
+func TestParseOneClassifiesSetGlobalTransactionReadOnlyAsRecognizedUnadapted(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET GLOBAL TRANSACTION READ ONLY",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusRecognizedUnadapted {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusRecognizedUnadapted)
+	}
+}
+
 func TestParseOneClassifiesSetGlobalTransactionIsolationLevelAsRecognizedUnadapted(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED",
