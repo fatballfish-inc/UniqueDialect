@@ -60,6 +60,8 @@ func renderStatement(stmt ir.Statement, from, to string, renderState *state) (st
 		return renderDelete(value, from, to, renderState), nil
 	case ir.SetStatement:
 		return renderSet(value, to)
+	case ir.SetTransactionStatement:
+		return renderSetTransaction(value, to)
 	case ir.SavepointStatement:
 		return renderSavepoint(value), nil
 	case ir.ReleaseSavepointStatement:
@@ -203,6 +205,23 @@ func renderSet(stmt ir.SetStatement, to string) (string, error) {
 			return "SET CHARACTER SET " + stmt.Charset, nil
 		}
 		return "SET NAMES " + stmt.Charset, nil
+	default:
+		return "", fmt.Errorf("unsupported SET target dialect %s", to)
+	}
+}
+
+func renderSetTransaction(stmt ir.SetTransactionStatement, to string) (string, error) {
+	switch to {
+	case "postgres":
+		if stmt.Scope == "transaction" {
+			return "SET TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
+		}
+		return "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
+	case "mysql":
+		if stmt.Scope == "transaction" {
+			return "SET TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
+		}
+		return "SET SESSION TRANSACTION ISOLATION LEVEL " + stmt.IsolationLevel, nil
 	default:
 		return "", fmt.Errorf("unsupported SET target dialect %s", to)
 	}

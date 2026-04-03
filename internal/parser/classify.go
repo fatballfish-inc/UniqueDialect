@@ -96,6 +96,13 @@ func classifyTiDBSetStatement(stmt *tidbast.SetStmt) (StatementKind, SupportStat
 	switch stmt.Variables[0].Name {
 	case tidbast.SetNames, tidbast.SetCharset:
 		return StatementKindSet, SupportStatusSupported
+	case "tx_isolation_one_shot":
+		return StatementKindSet, SupportStatusSupported
+	case "tx_isolation":
+		if stmt.Variables[0].IsGlobal {
+			return StatementKindSet, SupportStatusRecognizedUnadapted
+		}
+		return StatementKindSet, SupportStatusSupported
 	default:
 		return StatementKindSet, SupportStatusRecognizedUnadapted
 	}

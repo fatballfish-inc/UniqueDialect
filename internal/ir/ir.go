@@ -66,6 +66,14 @@ type SetStatement struct {
 
 func (SetStatement) statementNode() {}
 
+// SetTransactionStatement is the normalized transaction isolation SET statement.
+type SetTransactionStatement struct {
+	Scope          string
+	IsolationLevel string
+}
+
+func (SetTransactionStatement) statementNode() {}
+
 // SavepointStatement is the normalized SAVEPOINT statement.
 type SavepointStatement struct {
 	Name string
