@@ -32,10 +32,14 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 		if stmt.Table == nil {
 			return nil, fmt.Errorf("missing SHOW COLUMNS table")
 		}
-		if stmt.Extended || stmt.Where != nil {
+		if stmt.Extended {
 			return nil, fmt.Errorf("unsupported SHOW COLUMNS variant")
 		}
 		pattern, err := normalizeTiDBShowLikePattern(stmt.Pattern, "SHOW COLUMNS")
+		if err != nil {
+			return nil, err
+		}
+		field, err := normalizeTiDBShowColumnsWhere(stmt.Where)
 		if err != nil {
 			return nil, err
 		}
@@ -48,6 +52,7 @@ func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {
 			Database: database,
 			Full:     stmt.Full,
 			Pattern:  pattern,
+			Field:    field,
 		}, nil
 	case tidbast.ShowIndex:
 		if stmt.Table == nil {
@@ -210,6 +215,29 @@ func normalizeTiDBShowDatabasesWhere(where tidbast.ExprNode) (string, error) {
 	valueExpr, ok := binary.R.(tidbast.ValueExpr)
 	if !ok {
 		return "", fmt.Errorf("unsupported SHOW DATABASES variant")
+	}
+
+	return strings.TrimSpace(valueExpr.GetString()), nil
+}
+
+func normalizeTiDBShowColumnsWhere(where tidbast.ExprNode) (string, error) {
+	if where == nil {
+		return "", nil
+	}
+
+	binary, ok := where.(*tidbast.BinaryOperationExpr)
+	if !ok || binary.Op != tidbopcode.EQ {
+		return "", fmt.Errorf("unsupported SHOW COLUMNS variant")
+	}
+
+	columnExpr, ok := binary.L.(*tidbast.ColumnNameExpr)
+	if !ok || columnExpr.Name == nil || !strings.EqualFold(strings.TrimSpace(columnExpr.Name.Name.O), "Field") {
+		return "", fmt.Errorf("unsupported SHOW COLUMNS variant")
+	}
+
+	valueExpr, ok := binary.R.(tidbast.ValueExpr)
+	if !ok {
+		return "", fmt.Errorf("unsupported SHOW COLUMNS variant")
 	}
 
 	return strings.TrimSpace(valueExpr.GetString()), nil

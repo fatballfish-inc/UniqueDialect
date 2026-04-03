@@ -333,7 +333,9 @@ func renderShowColumns(stmt ir.ShowColumnsStatement, to string) (string, error) 
 		}
 		sql += " WHERE t.relkind IN ('r', 'p', 'v', 'm', 'f') AND t.relname = " +
 			quoteStringLiteral(strings.TrimSpace(table)) + " AND " + schemaPredicate
-		if stmt.Pattern != "" {
+		if stmt.Field != "" {
+			sql += " AND a.attname = " + quoteStringLiteral(stmt.Field)
+		} else if stmt.Pattern != "" {
 			sql += " AND a.attname ILIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		sql +=
@@ -348,7 +350,9 @@ func renderShowColumns(stmt ir.ShowColumnsStatement, to string) (string, error) 
 		if strings.TrimSpace(stmt.Database) != "" {
 			sql += " IN " + quoteIdentifierChain(stmt.Database, to)
 		}
-		if stmt.Pattern != "" {
+		if stmt.Field != "" {
+			sql += " WHERE Field = " + quoteStringLiteral(stmt.Field)
+		} else if stmt.Pattern != "" {
 			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
 		}
 		return sql, nil

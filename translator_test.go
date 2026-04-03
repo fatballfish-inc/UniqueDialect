@@ -1685,6 +1685,28 @@ func TestTranslatorTranslatesMySQLShowColumnsLikeToPostgresViaParserHooks(t *tes
 	}
 }
 
+func TestTranslatorTranslatesMySQLShowColumnsWhereFieldEqualsToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW COLUMNS FROM `users` WHERE Field = 'id'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := `SELECT a.attname AS "Field", format_type(a.atttypid, a.atttypmod) AS "Type", CASE WHEN a.attnotnull THEN 'NO' ELSE 'YES' END AS "Null", CASE WHEN EXISTS (SELECT 1 FROM pg_index ix WHERE ix.indrelid = t.oid AND ix.indisprimary AND a.attnum = ANY(ix.indkey)) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_index ix WHERE ix.indrelid = t.oid AND ix.indisunique AND ix.indnkeyatts = 1 AND a.attnum = ANY(ix.indkey)) THEN 'UNI' WHEN EXISTS (SELECT 1 FROM pg_index ix WHERE ix.indrelid = t.oid AND a.attnum = ANY(ix.indkey)) THEN 'MUL' ELSE '' END AS "Key", pg_get_expr(ad.adbin, ad.adrelid) AS "Default", CASE WHEN a.attidentity IN ('a', 'd') THEN 'auto_increment' WHEN a.attgenerated = 's' THEN 'STORED GENERATED' ELSE '' END AS "Extra" FROM pg_attribute a JOIN pg_class t ON t.oid = a.attrelid JOIN pg_namespace n ON n.oid = t.relnamespace LEFT JOIN pg_attrdef ad ON ad.adrelid = a.attrelid AND ad.adnum = a.attnum WHERE t.relkind IN ('r', 'p', 'v', 'm', 'f') AND t.relname = 'users' AND pg_table_is_visible(t.oid) AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum`
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLShowFullColumnsLikeToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
@@ -1712,6 +1734,36 @@ func TestTranslatorTranslatesMySQLShowFullColumnsLikeToPostgresViaParserHooks(t 
 	}
 	if !strings.Contains(result.SQL, `AND a.attname ILIKE 'id%'`) {
 		t.Fatalf("Translate() SQL = %q, want LIKE predicate", result.SQL)
+	}
+}
+
+func TestTranslatorTranslatesMySQLShowFullColumnsWhereFieldEqualsToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SHOW FULL COLUMNS FROM `users` WHERE Field = 'id'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if !strings.Contains(result.SQL, `AS "Collation"`) {
+		t.Fatalf("Translate() SQL = %q, want Collation column", result.SQL)
+	}
+	if !strings.Contains(result.SQL, `AS "Privileges"`) {
+		t.Fatalf("Translate() SQL = %q, want Privileges column", result.SQL)
+	}
+	if !strings.Contains(result.SQL, `AS "Comment"`) {
+		t.Fatalf("Translate() SQL = %q, want Comment column", result.SQL)
+	}
+	if !strings.Contains(result.SQL, `AND a.attname = 'id'`) {
+		t.Fatalf("Translate() SQL = %q, want WHERE predicate", result.SQL)
 	}
 }
 

@@ -118,6 +118,7 @@ type ShowColumnsStatement struct {
 	Database string
 	Full     bool
 	Pattern  string
+	Field    string
 }
 
 func (ShowColumnsStatement) statementNode() {}
