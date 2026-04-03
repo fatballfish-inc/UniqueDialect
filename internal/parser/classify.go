@@ -112,7 +112,7 @@ func classifyTiDBBeginStatement(stmt *tidbast.BeginStmt) (StatementKind, Support
 	if stmt == nil {
 		return StatementKindBegin, SupportStatusSupported
 	}
-	if stmt.Mode != "" || stmt.CausalConsistencyOnly || stmt.ReadOnly || stmt.AsOf != nil {
+	if stmt.Mode != "" || stmt.CausalConsistencyOnly || stmt.AsOf != nil {
 		return StatementKindBegin, SupportStatusRecognizedUnadapted
 	}
 	return StatementKindBegin, SupportStatusSupported

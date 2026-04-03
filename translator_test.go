@@ -571,6 +571,27 @@ func TestTranslatorTranslatesMySQLBeginToPostgresViaParserHooks(t *testing.T) {
 	}
 }
 
+func TestTranslatorTranslatesMySQLStartTransactionReadOnlyToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "START TRANSACTION READ ONLY")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	if result.SQL != "START TRANSACTION READ ONLY" {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, "START TRANSACTION READ ONLY")
+	}
+}
+
 func TestTranslatorBlocksMySQLBeginPessimisticToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
