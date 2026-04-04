@@ -2446,6 +2446,46 @@ func TestTranslatorRejectsMySQLShowTableStatusToSQLiteViaParserHooks(t *testing.
 	}
 }
 
+func TestTranslatorRejectsMySQLShowIndexCompoundWhereToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SHOW INDEX FROM `users` WHERE Key_name = 'idx_users_email' AND Column_name = 'email'")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want unsupported SHOW INDEX variant")
+	}
+	if !strings.Contains(err.Error(), "unsupported SHOW INDEX variant") {
+		t.Fatalf("Translate() error = %v, want unsupported SHOW INDEX variant", err)
+	}
+}
+
+func TestTranslatorRejectsMySQLShowTableStatusCompoundWhereToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	_, err = translator.Translate(context.Background(), "SHOW TABLE STATUS WHERE Name = 'users' AND Comment = 'archived'")
+	if err == nil {
+		t.Fatalf("Translate() error = nil, want unsupported SHOW TABLE STATUS variant")
+	}
+	if !strings.Contains(err.Error(), "unsupported SHOW TABLE STATUS variant") {
+		t.Fatalf("Translate() error = %v, want unsupported SHOW TABLE STATUS variant", err)
+	}
+}
+
 func TestTranslatorRejectsMySQLShowColumnsToSQLiteViaParserHooks(t *testing.T) {
 	t.Parallel()
 
