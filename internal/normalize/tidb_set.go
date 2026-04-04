@@ -47,7 +47,7 @@ func normalizeTiDBSet(sql string, stmt *tidbast.SetStmt) (ir.Statement, error) {
 			Scope:          "transaction",
 			IsolationLevel: level,
 		}, nil
-	case "tx_isolation":
+	case "tx_isolation", "transaction_isolation":
 		if variable.IsGlobal {
 			return nil, fmt.Errorf("unsupported SET variant")
 		}

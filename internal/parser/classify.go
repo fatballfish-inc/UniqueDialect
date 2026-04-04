@@ -115,7 +115,7 @@ func classifyTiDBSetStatement(sql string, stmt *tidbast.SetStmt) (StatementKind,
 		return StatementKindSet, SupportStatusSupported
 	case "tx_isolation_one_shot":
 		return StatementKindSet, SupportStatusSupported
-	case "tx_isolation":
+	case "tx_isolation", "transaction_isolation":
 		if stmt.Variables[0].IsGlobal {
 			return StatementKindSet, SupportStatusRecognizedUnadapted
 		}

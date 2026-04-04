@@ -123,6 +123,22 @@ func TestParseOneClassifiesSetSessionTransactionIsolationLevelAsSupported(t *tes
 	}
 }
 
+func TestParseOneClassifiesSetSessionTransactionIsolationAssignmentAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SET SESSION transaction_isolation = 'READ-COMMITTED'",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindSet {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindSet)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesSetSessionTxIsolationAssignmentAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SET SESSION tx_isolation = 'READ-COMMITTED'",

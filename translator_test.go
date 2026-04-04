@@ -1162,6 +1162,28 @@ func TestTranslatorTranslatesMySQLSetSessionTransactionIsolationLevelToPostgresV
 	}
 }
 
+func TestTranslatorTranslatesMySQLSetSessionTransactionIsolationAssignmentToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET SESSION transaction_isolation = 'READ-COMMITTED'")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED"
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorTranslatesMySQLSetSessionTxIsolationAssignmentToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
