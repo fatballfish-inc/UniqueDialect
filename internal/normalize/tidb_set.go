@@ -12,7 +12,7 @@ import (
 var (
 	normalizeSetSessionTransactionReadModePattern  = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 	normalizeSetTransactionReadModePattern         = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
-	normalizeSetSessionTxReadOnlyAssignmentPattern = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+(?:tx_read_only|transaction_read_only)\s*=\s*(?:[01]|ON|OFF|TRUE|FALSE)\s*;?\s*$`)
+	normalizeSetSessionTxReadOnlyAssignmentPattern = regexp.MustCompile(`(?is)^\s*SET\s+(?:SESSION\s+)?(?:tx_read_only|transaction_read_only)\s*=\s*(?:[01]|ON|OFF|TRUE|FALSE)\s*;?\s*$`)
 )
 
 func normalizeTiDBSet(sql string, stmt *tidbast.SetStmt) (ir.Statement, error) {
