@@ -1316,6 +1316,50 @@ func TestTranslatorTranslatesMySQLSetSessionTxReadOnlyOffAssignmentToPostgresVia
 	}
 }
 
+func TestTranslatorTranslatesMySQLSetSessionTxReadOnlyTrueAssignmentToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET SESSION tx_read_only = TRUE")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
+func TestTranslatorTranslatesMySQLSetSessionTxReadOnlyFalseAssignmentToPostgresViaParserHooks(t *testing.T) {
+	t.Parallel()
+
+	translator, err := uniquedialect.NewTranslator(uniquedialect.TranslatorOptions{
+		InputDialect:  uniquedialect.DialectMySQL,
+		TargetDialect: uniquedialect.DialectPostgres,
+	})
+	if err != nil {
+		t.Fatalf("NewTranslator() error = %v", err)
+	}
+
+	result, err := translator.Translate(context.Background(), "SET SESSION tx_read_only = FALSE")
+	if err != nil {
+		t.Fatalf("Translate() error = %v", err)
+	}
+
+	want := "SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE"
+	if result.SQL != want {
+		t.Fatalf("Translate() SQL = %q, want %q", result.SQL, want)
+	}
+}
+
 func TestTranslatorBlocksMySQLSetGlobalTransactionReadOnlyToPostgresViaParserHooks(t *testing.T) {
 	t.Parallel()
 
