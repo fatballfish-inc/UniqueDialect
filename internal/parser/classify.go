@@ -11,7 +11,7 @@ var (
 	setSessionTransactionReadModePattern          = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 	setTransactionReadModePattern                 = regexp.MustCompile(`(?is)^\s*SET\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
 	setGlobalTransactionReadModePattern           = regexp.MustCompile(`(?is)^\s*SET\s+GLOBAL\s+TRANSACTION\s+READ\s+(ONLY|WRITE)\s*;?\s*$`)
-	setSessionTxReadOnlyAssignmentPattern         = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+tx_read_only\s*=\s*(?:[01]|ON|OFF|TRUE|FALSE)\s*;?\s*$`)
+	setSessionTxReadOnlyAssignmentPattern         = regexp.MustCompile(`(?is)^\s*SET\s+SESSION\s+(?:tx_read_only|transaction_read_only)\s*=\s*(?:[01]|ON|OFF|TRUE|FALSE)\s*;?\s*$`)
 	startTransactionWithConsistentSnapshotPattern = regexp.MustCompile(`(?is)^\s*START\s+TRANSACTION\s+WITH\s+CONSISTENT\s+SNAPSHOT\s*;?\s*$`)
 	commitDefaultCompletionVariantPattern         = regexp.MustCompile(`(?is)^\s*COMMIT\s+(AND\s+NO\s+CHAIN(?:\s+NO\s+RELEASE)?|NO\s+RELEASE)\s*;?\s*$`)
 	rollbackDefaultCompletionVariantPattern       = regexp.MustCompile(`(?is)^\s*ROLLBACK\s+(AND\s+NO\s+CHAIN(?:\s+NO\s+RELEASE)?|NO\s+RELEASE)\s*;?\s*$`)
@@ -120,7 +120,7 @@ func classifyTiDBSetStatement(sql string, stmt *tidbast.SetStmt) (StatementKind,
 			return StatementKindSet, SupportStatusRecognizedUnadapted
 		}
 		return StatementKindSet, SupportStatusSupported
-	case "tx_read_only":
+	case "tx_read_only", "transaction_read_only":
 		switch {
 		case setGlobalTransactionReadModePattern.MatchString(sql):
 			return StatementKindSet, SupportStatusRecognizedUnadapted
