@@ -407,6 +407,7 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			renderShowIndexColumn(stmt.Column) +
 			renderShowIndexType(stmt.IndexType) +
 			renderShowIndexNonUnique(stmt.NonUnique) +
+			renderShowIndexSeqInIndex(stmt.SeqInIndex) +
 			" AND k.ordinality <= ix.indnkeyatts" +
 			" ORDER BY i.relname, k.ordinality", nil
 	case "mysql":
@@ -422,6 +423,8 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			sql += " WHERE Index_type = " + quoteStringLiteral(stmt.IndexType)
 		} else if stmt.NonUnique != "" {
 			sql += " WHERE Non_unique = " + stmt.NonUnique
+		} else if stmt.SeqInIndex != "" {
+			sql += " WHERE Seq_in_index = " + stmt.SeqInIndex
 		}
 		return sql, nil
 	default:
@@ -464,6 +467,14 @@ func renderShowIndexNonUnique(nonUnique string) string {
 	default:
 		return ""
 	}
+}
+
+func renderShowIndexSeqInIndex(seqInIndex string) string {
+	if strings.TrimSpace(seqInIndex) == "" {
+		return ""
+	}
+
+	return " AND k.ordinality = " + strings.TrimSpace(seqInIndex)
 }
 
 func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string, error) {

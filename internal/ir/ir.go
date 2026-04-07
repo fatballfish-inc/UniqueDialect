@@ -127,12 +127,13 @@ func (ShowColumnsStatement) statementNode() {}
 
 // ShowIndexStatement is the normalized SHOW INDEX statement.
 type ShowIndexStatement struct {
-	Table     string
-	Database  string
-	KeyName   string
-	Column    string
-	IndexType string
-	NonUnique string
+	Table      string
+	Database   string
+	KeyName    string
+	Column     string
+	IndexType  string
+	NonUnique  string
+	SeqInIndex string
 }
 
 func (ShowIndexStatement) statementNode() {}
