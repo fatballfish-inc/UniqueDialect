@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/adapter"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/adapter"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
 )
 
 var mariaDBDropForeignKeyIfExistsPattern = regexp.MustCompile(`(?is)^\s*ALTER\s+TABLE\s+(` + "`" + `[^` + "`" + `]+` + "`" + `|\"[^\"]+\"|[A-Za-z0-9_\.]+)\s+DROP\s+FOREIGN\s+KEY\s+IF\s+EXISTS\s+(` + "`" + `[^` + "`" + `]+` + "`" + `|\"[^\"]+\"|[A-Za-z0-9_]+)\s*;?\s*$`)

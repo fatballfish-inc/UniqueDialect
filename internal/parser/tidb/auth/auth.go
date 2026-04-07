@@ -16,7 +16,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
 )
 
 const (

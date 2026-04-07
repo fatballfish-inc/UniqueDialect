@@ -18,9 +18,9 @@ package ast
 import (
 	"io"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/types"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/types"
 )
 
 // Node is the basic element of the AST.

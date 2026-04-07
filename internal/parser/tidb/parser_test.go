@@ -22,14 +22,14 @@ import (
 	"testing"
 
 	"github.com/pingcap/errors"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
-	. "github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/opcode"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/terror"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/test_driver"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
+	. "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/opcode"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/terror"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/test_driver"
 	"github.com/stretchr/testify/require"
 )
 

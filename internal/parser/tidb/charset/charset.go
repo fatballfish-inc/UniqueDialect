@@ -19,8 +19,8 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/terror"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/terror"
 	"go.uber.org/zap"
 )
 

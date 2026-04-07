@@ -3,10 +3,10 @@ package normalize
 import (
 	"fmt"
 
-	"github.com/fatballfish/uniquedialect/internal/ir"
-	internalparser "github.com/fatballfish/uniquedialect/internal/parser"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	"github.com/fatballfish/uniquedialect/internal/syntax"
+	"github.com/fatballfish-inc/UniqueDialect/internal/ir"
+	internalparser "github.com/fatballfish-inc/UniqueDialect/internal/parser"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
 )
 
 // ParsedStatement converts a unified parser result into normalized IR.

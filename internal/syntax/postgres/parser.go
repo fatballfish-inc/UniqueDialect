@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/syntax"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
 )
 
 // Parse parses a minimal PostgreSQL syntax subset into syntax nodes.

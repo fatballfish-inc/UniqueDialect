@@ -21,7 +21,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
 )
 
 type yyhintSymType struct {

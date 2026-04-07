@@ -32,7 +32,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
 	requires "github.com/stretchr/testify/require"
 )
 

@@ -17,7 +17,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
 	"github.com/stretchr/testify/require"
 )
 

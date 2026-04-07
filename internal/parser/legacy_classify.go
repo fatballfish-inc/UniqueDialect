@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/fatballfish/uniquedialect/internal/syntax"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
 )
 
 func classifyLegacyStatement(node syntax.Statement) (StatementKind, SupportStatus, string) {

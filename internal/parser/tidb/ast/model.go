@@ -19,7 +19,7 @@ import (
 	"unsafe"
 
 	"github.com/pingcap/errors"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/util"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/util"
 )
 
 // TableLockType is the type of the table lock.

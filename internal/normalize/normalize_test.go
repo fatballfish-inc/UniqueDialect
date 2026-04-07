@@ -3,10 +3,10 @@ package normalize_test
 import (
 	"testing"
 
-	"github.com/fatballfish/uniquedialect"
-	"github.com/fatballfish/uniquedialect/internal/ir"
-	internalnormalize "github.com/fatballfish/uniquedialect/internal/normalize"
-	internalparser "github.com/fatballfish/uniquedialect/internal/parser"
+	"github.com/fatballfish-inc/UniqueDialect"
+	"github.com/fatballfish-inc/UniqueDialect/internal/ir"
+	internalnormalize "github.com/fatballfish-inc/UniqueDialect/internal/normalize"
+	internalparser "github.com/fatballfish-inc/UniqueDialect/internal/parser"
 )
 
 func TestParsedStatementNormalizesSelectFromTiDBAST(t *testing.T) {

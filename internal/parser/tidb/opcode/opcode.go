@@ -16,7 +16,7 @@ package opcode
 import (
 	"io"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
 )
 
 // Op is opcode type.

@@ -21,10 +21,10 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/util"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/util"
 )
 
 // UnspecifiedLength is unspecified length.

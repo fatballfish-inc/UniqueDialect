@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fatballfish/uniquedialect"
+	"github.com/fatballfish-inc/UniqueDialect"
 )
 
 func TestParseDSNBuildsCanonicalOptions(t *testing.T) {

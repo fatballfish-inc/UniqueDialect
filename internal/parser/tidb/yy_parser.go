@@ -22,12 +22,12 @@ import (
 	"unicode"
 
 	"github.com/pingcap/errors"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/auth"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/terror"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/types"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/auth"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/terror"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/types"
 )
 
 var (

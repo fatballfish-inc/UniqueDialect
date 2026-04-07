@@ -3,8 +3,8 @@ package parser_test
 import (
 	"testing"
 
-	"github.com/fatballfish/uniquedialect"
-	internalparser "github.com/fatballfish/uniquedialect/internal/parser"
+	"github.com/fatballfish-inc/UniqueDialect"
+	internalparser "github.com/fatballfish-inc/UniqueDialect/internal/parser"
 )
 
 func TestParseOneClassifiesCreateTable(t *testing.T) {

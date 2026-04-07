@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/ir"
-	"github.com/fatballfish/uniquedialect/internal/syntax"
+	"github.com/fatballfish-inc/UniqueDialect/internal/ir"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
 )
 
 var (

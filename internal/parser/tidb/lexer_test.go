@@ -18,7 +18,7 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
 	requires "github.com/stretchr/testify/require"
 )
 

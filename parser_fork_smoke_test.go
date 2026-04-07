@@ -3,8 +3,8 @@ package uniquedialect_test
 import (
 	"testing"
 
-	tidbparser "github.com/fatballfish/uniquedialect/internal/parser/tidb"
-	_ "github.com/fatballfish/uniquedialect/internal/parser/tidb/test_driver"
+	tidbparser "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb"
+	_ "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/test_driver"
 )
 
 func TestForkedTiDBParserParsesSimpleSelect(t *testing.T) {

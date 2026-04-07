@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/ir"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	tidbformat "github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/syntax"
+	"github.com/fatballfish-inc/UniqueDialect/internal/ir"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	tidbformat "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
 )
 
 func normalizeTiDBSelect(sql string, stmt *tidbast.SelectStmt) (ir.Statement, error) {

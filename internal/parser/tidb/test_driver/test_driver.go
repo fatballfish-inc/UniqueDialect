@@ -20,10 +20,10 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
 )
 
 func init() {

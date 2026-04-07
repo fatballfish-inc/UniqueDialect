@@ -23,7 +23,7 @@ import (
 	"unsafe"
 
 	"github.com/pingcap/errors"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
 )
 
 // Digest stores the fixed length hash value.

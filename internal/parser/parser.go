@@ -3,9 +3,9 @@ package parser
 import (
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/adapter"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	"github.com/fatballfish/uniquedialect/internal/syntax"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/adapter"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
 )
 
 // ParseOne parses a single SQL statement and classifies it for downstream adaptation.

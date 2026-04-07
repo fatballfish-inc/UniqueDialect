@@ -18,7 +18,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/transform"
 )

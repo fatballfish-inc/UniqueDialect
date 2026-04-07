@@ -18,7 +18,7 @@ package ast
 import (
 	"testing"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
 	"github.com/stretchr/testify/require"
 )
 

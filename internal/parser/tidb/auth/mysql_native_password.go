@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/pingcap/errors"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/terror"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/terror"
 )
 
 // CheckScrambledPassword check scrambled password received from client.

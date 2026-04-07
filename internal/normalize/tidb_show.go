@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/ir"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	tidbopcode "github.com/fatballfish/uniquedialect/internal/parser/tidb/opcode"
+	"github.com/fatballfish-inc/UniqueDialect/internal/ir"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	tidbopcode "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/opcode"
 )
 
 func normalizeTiDBShowStmt(stmt *tidbast.ShowStmt) (ir.Statement, error) {

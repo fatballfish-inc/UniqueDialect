@@ -17,12 +17,12 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/auth"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/terror"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/tidb"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/types"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/auth"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/terror"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/tidb"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/types"
 )
 
 var (

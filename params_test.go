@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fatballfish/uniquedialect"
+	"github.com/fatballfish-inc/UniqueDialect"
 )
 
 func TestOpenWithOptionsNormalizesStructuredArgsForSQLite(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fatballfish/uniquedialect"
+	"github.com/fatballfish-inc/UniqueDialect"
 )
 
 func TestBootstrapPlannerPlansPostgresArtifactsForMySQLOnUpdateTimestamp(t *testing.T) {

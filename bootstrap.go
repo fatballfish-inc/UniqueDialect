@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	internalparser "github.com/fatballfish/uniquedialect/internal/parser"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	tidbformat "github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
+	internalparser "github.com/fatballfish-inc/UniqueDialect/internal/parser"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	tidbformat "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
 )
 
 // BootstrapKind identifies the artifact type.

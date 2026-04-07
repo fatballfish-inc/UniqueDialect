@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
 )
 
 var (

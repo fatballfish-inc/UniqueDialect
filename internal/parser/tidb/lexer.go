@@ -20,9 +20,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/charset"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	tidbfeature "github.com/fatballfish/uniquedialect/internal/parser/tidb/tidb"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/charset"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	tidbfeature "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/tidb"
 )
 
 var _ = yyLexer(&Scanner{})

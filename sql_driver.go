@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/fatballfish/uniquedialect/internal/params"
+	"github.com/fatballfish-inc/UniqueDialect/internal/params"
 	glesqlite "github.com/glebarez/go-sqlite"
 	mysqldrv "github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5"

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatballfish/uniquedialect/internal/ir"
-	tidbast "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
+	"github.com/fatballfish-inc/UniqueDialect/internal/ir"
+	tidbast "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
 )
 
 func normalizeTiDBSavepoint(stmt *tidbast.SavepointStmt) (ir.Statement, error) {

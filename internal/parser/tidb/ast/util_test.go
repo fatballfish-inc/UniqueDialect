@@ -18,11 +18,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb"
-	. "github.com/fatballfish/uniquedialect/internal/parser/tidb/ast"
-	. "github.com/fatballfish/uniquedialect/internal/parser/tidb/format"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/test_driver"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb"
+	. "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/ast"
+	. "github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/format"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/test_driver"
 	"github.com/stretchr/testify/require"
 )
 

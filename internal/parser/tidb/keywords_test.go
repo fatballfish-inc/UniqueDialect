@@ -16,7 +16,7 @@ package parser_test
 import (
 	"testing"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb"
 	"github.com/stretchr/testify/require"
 )
 

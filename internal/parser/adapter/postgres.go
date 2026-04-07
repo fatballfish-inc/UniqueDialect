@@ -1,8 +1,8 @@
 package adapter
 
 import (
-	"github.com/fatballfish/uniquedialect/internal/syntax"
-	postgressyntax "github.com/fatballfish/uniquedialect/internal/syntax/postgres"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
+	postgressyntax "github.com/fatballfish-inc/UniqueDialect/internal/syntax/postgres"
 )
 
 // ParsePostgresStatements parses SQL through the transitional PostgreSQL syntax backend.

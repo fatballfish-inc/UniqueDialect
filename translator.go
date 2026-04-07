@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/fatballfish/uniquedialect/internal/normalize"
-	internalparser "github.com/fatballfish/uniquedialect/internal/parser"
-	"github.com/fatballfish/uniquedialect/internal/render"
-	"github.com/fatballfish/uniquedialect/internal/syntax"
-	mysqlsyntax "github.com/fatballfish/uniquedialect/internal/syntax/mysql"
-	postgressyntax "github.com/fatballfish/uniquedialect/internal/syntax/postgres"
+	"github.com/fatballfish-inc/UniqueDialect/internal/normalize"
+	internalparser "github.com/fatballfish-inc/UniqueDialect/internal/parser"
+	"github.com/fatballfish-inc/UniqueDialect/internal/render"
+	"github.com/fatballfish-inc/UniqueDialect/internal/syntax"
+	mysqlsyntax "github.com/fatballfish-inc/UniqueDialect/internal/syntax/mysql"
+	postgressyntax "github.com/fatballfish-inc/UniqueDialect/internal/syntax/postgres"
 )
 
 // Translation contains a translated SQL statement and its mapped arguments.

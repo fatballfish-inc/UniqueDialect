@@ -19,8 +19,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/mysql"
-	"github.com/fatballfish/uniquedialect/internal/parser/tidb/terror"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/mysql"
+	"github.com/fatballfish-inc/UniqueDialect/internal/parser/tidb/terror"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
 )
