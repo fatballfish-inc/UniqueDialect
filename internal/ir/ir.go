@@ -144,6 +144,7 @@ type ShowTableStatusStatement struct {
 	Pattern  string
 	Name     string
 	Comment  string
+	Engine   string
 }
 
 func (ShowTableStatusStatement) statementNode() {}

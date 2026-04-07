@@ -505,6 +505,7 @@ func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string,
 			" FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_am am ON am.oid = c.relam WHERE c.relkind IN ('r', 'p') AND " + schemaPredicate +
 			renderShowTableStatusName(stmt.Name) +
 			renderShowTableStatusComment(stmt.Comment) +
+			renderShowTableStatusEngine(stmt.Engine) +
 			renderShowTableStatusPattern(stmt.Pattern) +
 			" ORDER BY c.relname", nil
 	case "mysql":
@@ -516,6 +517,8 @@ func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string,
 			sql += " WHERE Name = " + quoteStringLiteral(stmt.Name)
 		} else if stmt.Comment != "" {
 			sql += " WHERE Comment = " + quoteStringLiteral(stmt.Comment)
+		} else if stmt.Engine != "" {
+			sql += " WHERE Engine = " + quoteStringLiteral(stmt.Engine)
 		}
 		if stmt.Pattern != "" {
 			sql += " LIKE " + quoteStringLiteral(stmt.Pattern)
@@ -577,6 +580,13 @@ func renderShowTableStatusComment(comment string) string {
 		return ""
 	}
 	return " AND COALESCE(obj_description(c.oid, 'pg_class'), '') = " + quoteStringLiteral(comment)
+}
+
+func renderShowTableStatusEngine(engine string) string {
+	if engine == "" {
+		return ""
+	}
+	return " AND COALESCE(am.amname, 'heap') = " + quoteStringLiteral(engine)
 }
 
 func renderShowCreateDatabase(stmt ir.ShowCreateDatabaseStatement, to string) (string, error) {
