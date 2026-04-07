@@ -1,0 +1,84 @@
+# Parser Adaptation Matrix
+
+## Purpose
+This document tracks parser integration and adaptation status after forking the TiDB parser into the project.
+
+Status values:
+- `supported`: parsed and adapted through normalize/render or explicitly passed through safely
+- `recognized_unadapted`: parser can identify the syntax and native AST node, but normalize/render is not complete yet
+- `unsupported`: not in MVP scope or not available on the current parser path
+
+## Matrix
+
+| Priority | Syntax Type | Native AST Node | Input Dialects | Target Dialects | Status | Normalize | Render | Tests | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| P0 | SELECT | `*ast.SelectStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current support exists; migrate to new parser path first |
+| P0 | INSERT | `*ast.InsertStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current support exists; conflict handling needs AST migration |
+| P0 | UPDATE | `*ast.UpdateStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current support exists; migrate off string parser |
+| P0 | DELETE | `*ast.DeleteStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current support exists; migrate off string parser |
+| P0 | WITH | `*ast.SelectStmt` with `With` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path uses raw composable rewrite; semantic CTE decomposition is still deferred |
+| P0 | Set Operations | `*ast.SetOprStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path uses raw composable rewrite; covers UNION / INTERSECT / EXCEPT subsets accepted by target dialect |
+| P0 | CREATE TABLE | `*ast.CreateTableStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Partially semantic now: columns/defaults/auto_increment and PK forms are normalized; PostgreSQL-target render rewrites table-level `UNIQUE KEY/INDEX`, `FOREIGN KEY`, and `CHECK` constraints into normalized `CONSTRAINT ...` forms; bootstrap also consumes native AST |
+| P0 | ALTER TABLE | `*ast.AlterTableStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Partially semantic now: `ADD COLUMN`, `DROP COLUMN`, `ALTER COLUMN ... SET/DROP DEFAULT`, `MODIFY COLUMN`, `CHANGE COLUMN`, `ADD PRIMARY KEY`, `ADD UNIQUE KEY`, `ADD FOREIGN KEY`, named `ADD INDEX/ADD KEY`, `DROP PRIMARY KEY`, `DROP FOREIGN KEY`, `DROP INDEX`; `ADD UNIQUE KEY/INDEX` now splits into ordered statements so PG output keeps semantics without `IF NOT EXISTS`, and MariaDB-only extensions rejected by TiDB parser are patched in the parser facade, including `DROP FOREIGN KEY IF EXISTS`, `DROP PRIMARY KEY IF EXISTS`, `ADD UNIQUE KEY IF NOT EXISTS`, and mixed batches such as `DROP FOREIGN KEY IF EXISTS ..., DROP INDEX IF EXISTS ...` and `DROP PRIMARY KEY IF EXISTS, DROP INDEX IF EXISTS ...`; mixed / multi-spec `ALTER TABLE` statements split non-unique index specs into standalone statements while preserving index options already supported by `CREATE INDEX`, including `IF NOT EXISTS`, `USING`, `WITH PARSER`, visibility, index `COMMENT`, and partial-index `WHERE` clauses when the target dialect can express them |
+| P0 | DROP TABLE | `*ast.DropTableStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Raw DDL hook currently handles direct pass-through rewriting, including quoted identifier rewrite |
+| P0 | CREATE INDEX | `*ast.CreateIndexStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Partially semantic now: preserves `UNIQUE`, `IF NOT EXISTS`, `USING`, `WITH PARSER`, index `COMMENT`, visibility, partial-index `WHERE`, and create-index `LOCK/ALGORITHM` when the target dialect can express them; PostgreSQL/Oracle targets emit `COMMENT ON INDEX` when comment metadata is present and explicitly drop MySQL-only options such as `WITH PARSER`, visibility, and `LOCK/ALGORITHM` so no invalid SQL is produced, while TiDB-specific options remain pending |
+| P0 | DROP INDEX | `*ast.DropIndexStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Partially semantic now: PostgreSQL-target render removes MySQL-only `ON table`; broader index option handling remains pending |
+| P0 | CREATE VIEW | `*ast.CreateViewStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path uses parser-recognized raw DDL normalization plus render-time identifier rewrite; MySQL-only view attributes such as `ALGORITHM`, `DEFINER`, and `SQL SECURITY` still need dialect-aware follow-up |
+| P0 | DROP VIEW | `*ast.DropTableStmt` with `IsView` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Reuses the drop-table raw DDL path, with parser classification split on `IsView` so render can rewrite identifiers without changing drop-view semantics |
+| P0 | TRUNCATE TABLE | `*ast.TruncateTableStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path uses parser-recognized raw DDL normalization plus identifier rewrite during render; deeper dialect-specific truncate semantics remain pending |
+| P0 | RENAME TABLE | `*ast.RenameTableStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Normalized into ordered rename statements so Postgres target emits `ALTER TABLE ... RENAME TO ...`; current semantic support is limited to same-schema renames, while cross-schema moves still fall back to raw DDL |
+| P0 | EXPLAIN | `*ast.ExplainStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path preserves the original explain wrapper through raw composable normalization so identifier rewrite still applies to the explained statement; TiDB/MySQL-specific explain formats and analyze variants still need dialect review |
+| P0 | SHOW | `*ast.ShowStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres | supported | yes | yes | yes | Current support is partial and semantic for `mysql` and `postgres` targets only: `SHOW TABLES` and `SHOW FULL TABLES` now support optional `LIKE` filters, and the explicit-schema subset `SHOW TABLES/FULL TABLES IN db WHERE Tables_in_db = '...'`; `SHOW FULL TABLES` also supports the minimal `WHERE Table_type = '...'` subset; `SHOW TABLE STATUS` supports bare and explicit-schema lookups, optional `LIKE`, plus the minimal `WHERE Name = '...'` / `WHERE Comment = '...'` / `WHERE Engine = '...'` subsets, `SHOW COLUMNS` and `SHOW FULL COLUMNS` now support optional `LIKE` filters plus the minimal `WHERE Field = '...'` subset, `SHOW INDEX` supports bare table lookups, explicit schema selection, and the minimal `WHERE Key_name = '...'` / `WHERE Column_name = '...'` / `WHERE Index_type = '...'` / `WHERE Non_unique = 0|1` / `WHERE Seq_in_index = <n>` subsets, `SHOW DATABASES` with optional `LIKE` plus the minimal `WHERE Database = '...'` subset, `SHOW CREATE TABLE`, `SHOW CREATE VIEW`, `SHOW CREATE DATABASE`, and the safe subset of `SHOW [SESSION] VARIABLES [LIKE ...]` plus the minimal `WHERE Variable_name = '...'` subset are translated into PostgreSQL catalog queries, while unsupported `SHOW` variants and unsupported target dialects are explicitly rejected instead of falling back to raw SQL |
+| P0 | USE | `*ast.UseStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Uses a minimal semantic path instead of raw SQL; PostgreSQL target maps `USE db` to `SET search_path TO db`, while deeper session/schema semantics still need follow-up |
+| P0 | BEGIN | `*ast.BeginStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Portable transaction openers such as `BEGIN`, `START TRANSACTION`, `START TRANSACTION READ WRITE`, and `START TRANSACTION READ ONLY` still use parser-recognized raw normalization, while TiDB/MySQL-specific begin modes such as `BEGIN PESSIMISTIC`, `BEGIN OPTIMISTIC`, `START TRANSACTION WITH CONSISTENT SNAPSHOT`, and `AS OF` / causal-consistency variants are explicitly downgraded to `recognized_unadapted` instead of being passed through as false support |
+| P0 | COMMIT | `*ast.CommitStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Bare `COMMIT` still uses the raw statement path; MySQL completion clauses such as `COMMIT RELEASE`, `COMMIT AND CHAIN`, and default-looking explicit variants such as `COMMIT AND NO CHAIN` / `COMMIT NO RELEASE` are explicitly downgraded to `recognized_unadapted` instead of being passed through as false support |
+| P0 | ROLLBACK | `*ast.RollbackStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Bare `ROLLBACK` still uses the raw statement path, while `ROLLBACK TO SAVEPOINT name` now normalizes into semantic IR so PostgreSQL output includes the required `SAVEPOINT` keyword; MySQL completion clauses, including explicit default forms such as `ROLLBACK AND NO CHAIN` / `ROLLBACK NO RELEASE`, remain explicitly unadapted |
+| P1 | SAVEPOINT | `*ast.SavepointStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Normalized into semantic transaction IR and rendered directly for cross-dialect transaction control |
+| P1 | RELEASE SAVEPOINT | `*ast.ReleaseSavepointStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Normalized into semantic transaction IR and rendered directly instead of relying on raw pass-through |
+| P1 | SET | `*ast.SetStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres | supported | yes | yes | yes | Current support is intentionally narrow for `mysql` and `postgres` targets only: `SET NAMES utf8/utf8mb4`, `SET CHARACTER SET utf8/utf8mb4`, `SET TRANSACTION ISOLATION LEVEL ...`, `SET SESSION TRANSACTION ISOLATION LEVEL ...`, `SET TRANSACTION READ ONLY/WRITE`, `SET SESSION TRANSACTION READ ONLY/WRITE`, and the minimal direct session assignment subset `SET [SESSION] tx_read_only = 1/0/ON/OFF/TRUE/FALSE` plus the MySQL alias `SET [SESSION] transaction_read_only = ...` and the `@@session.` form, as well as `SET [SESSION] tx_isolation = 'READ-COMMITTED'`-style isolation assignments plus the MySQL alias `SET [SESSION] transaction_isolation = ...` and the `@@session.` form, normalize into dedicated client-encoding / transaction-setting IR; PostgreSQL target renders charset changes via `SET client_encoding TO 'UTF8'`, while generic session-variable assignments such as `SET autocommit = 1`, other direct system-variable assignments, global transaction-setting changes, unsupported charsets, and unsupported target dialects remain explicitly blocked |
+| P1 | CREATE DATABASE | `*ast.CreateDatabaseStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path uses parser-recognized raw DDL normalization and identifier rewrite only; backend-specific database options still need targeted adaptation |
+| P1 | DROP DATABASE | `*ast.DropDatabaseStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | supported | yes | yes | yes | Current path uses parser-recognized raw DDL normalization and identifier rewrite only; operational restrictions remain backend-specific |
+| P2 | ALTER DATABASE | `*ast.AlterDatabaseStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | recognized_unadapted | no | no | no | Low immediate value for MVP |
+| P2 | CREATE USER | `*ast.CreateUserStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Out of current MVP |
+| P2 | GRANT | `*ast.GrantStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Privilege model mismatch |
+| P2 | REVOKE | `*ast.RevokeStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Privilege model mismatch |
+| P2 | PREPARE | `*ast.PrepareStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Driver-side prepared statement path already exists |
+| P2 | EXECUTE | `*ast.ExecuteStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Out of current MVP |
+| P2 | DEALLOCATE | `*ast.DeallocateStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Out of current MVP |
+| P2 | LOAD DATA | `*ast.LoadDataStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Requires file and privilege semantics |
+| P2 | CALL | `*ast.CallStmt` | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Procedure support not planned in MVP |
+| P3 | TiDB-Specific DDL/DML | various | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Explicitly excluded from MVP |
+| P3 | MariaDB Extensions | various | mysql, sqlite-compat, oracle-compat | mysql, postgres, sqlite, oracle | unsupported | no | no | no | Only revisit if demanded by users |
+
+## Notes
+- PostgreSQL input is intentionally not represented by TiDB AST rows in phase 1. It remains on a transitional parser path and should be tracked separately if its parser backend changes.
+- `sqlite-compat` and `oracle-compat` mean the current project accepts MySQL-like input syntax before converting toward those targets. They do not imply native SQLite or Oracle grammar support.
+- `WITH` / set-operation statements currently ride a raw composable render path. Identifier quoting, placeholders, and top-level MySQL `LIMIT offset,count` are adapted, but deeper semantic lowering into project IR is still future work.
+- `CREATE TABLE` and `ALTER TABLE` have moved beyond raw DDL pass-through and now perform partial semantic adaptation. Other P0 DDL rows marked `supported` are still primarily parser-recognized raw-hook rewrites unless noted otherwise.
+- This file should be updated whenever a syntax type changes state or gains test coverage.
+
+## Remaining Checklist
+
+### SET
+- [ ] `SET LOCAL ...` and other scope variants beyond the current session/transaction-safe subset
+- [ ] Additional direct session/system variable assignments beyond `tx_read_only` and `tx_isolation`
+- [ ] Multi-assignment forms such as `SET a = ..., b = ...`
+- [ ] Global variable and global transaction-setting rewrites
+- [ ] More charset/collation forms beyond `SET NAMES utf8/utf8mb4` and `SET CHARACTER SET utf8/utf8mb4`
+
+### SHOW INDEX
+- [x] `SHOW INDEX FROM tbl WHERE Key_name = '...'`
+- [x] `SHOW INDEX FROM tbl WHERE Column_name = '...'`
+- [x] `SHOW INDEX FROM tbl WHERE Index_type = '...'`
+- [x] `SHOW INDEX FROM tbl WHERE Non_unique = 0|1`
+- [x] `SHOW INDEX FROM tbl WHERE Seq_in_index = <n>`
+- [ ] `SHOW INDEX ... LIKE '...'`
+- [ ] Compound predicates, non-equality predicates, and additional metadata-column filters
+
+### SHOW TABLE STATUS
+- [x] `SHOW TABLE STATUS [FROM db] LIKE '...'`
+- [x] `SHOW TABLE STATUS WHERE Name = '...'`
+- [x] `SHOW TABLE STATUS WHERE Comment = '...'`
+- [x] `SHOW TABLE STATUS WHERE Engine = '...'`
+- [x] Schema-qualified coverage/docs completion for `SHOW TABLE STATUS [FROM db]` subsets
+- [ ] Compound predicates, non-equality predicates, and broader metadata-column filters
