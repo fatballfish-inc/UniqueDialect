@@ -132,6 +132,7 @@ type ShowIndexStatement struct {
 	KeyName   string
 	Column    string
 	IndexType string
+	NonUnique string
 }
 
 func (ShowIndexStatement) statementNode() {}

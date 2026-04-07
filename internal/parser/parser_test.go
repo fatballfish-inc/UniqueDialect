@@ -1143,6 +1143,22 @@ func TestParseOneClassifiesShowIndexWhereIndexTypeAsSupported(t *testing.T) {
 	}
 }
 
+func TestParseOneClassifiesShowIndexWhereNonUniqueAsSupported(t *testing.T) {
+	parsed, err := internalparser.ParseOne(
+		"SHOW INDEX FROM `users` WHERE Non_unique = 0",
+		uniquedialect.DialectMySQL,
+	)
+	if err != nil {
+		t.Fatalf("ParseOne() error = %v", err)
+	}
+	if parsed.Kind != internalparser.StatementKindShow {
+		t.Fatalf("Kind = %s, want %s", parsed.Kind, internalparser.StatementKindShow)
+	}
+	if parsed.Status != internalparser.SupportStatusSupported {
+		t.Fatalf("Status = %s, want %s", parsed.Status, internalparser.SupportStatusSupported)
+	}
+}
+
 func TestParseOneClassifiesShowTableStatusAsSupported(t *testing.T) {
 	parsed, err := internalparser.ParseOne(
 		"SHOW TABLE STATUS",

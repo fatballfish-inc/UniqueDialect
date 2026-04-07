@@ -406,6 +406,7 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			renderShowIndexKeyName(stmt.KeyName) +
 			renderShowIndexColumn(stmt.Column) +
 			renderShowIndexType(stmt.IndexType) +
+			renderShowIndexNonUnique(stmt.NonUnique) +
 			" AND k.ordinality <= ix.indnkeyatts" +
 			" ORDER BY i.relname, k.ordinality", nil
 	case "mysql":
@@ -419,6 +420,8 @@ func renderShowIndex(stmt ir.ShowIndexStatement, to string) (string, error) {
 			sql += " WHERE Column_name = " + quoteStringLiteral(stmt.Column)
 		} else if stmt.IndexType != "" {
 			sql += " WHERE Index_type = " + quoteStringLiteral(stmt.IndexType)
+		} else if stmt.NonUnique != "" {
+			sql += " WHERE Non_unique = " + stmt.NonUnique
 		}
 		return sql, nil
 	default:
@@ -448,6 +451,19 @@ func renderShowIndexType(indexType string) string {
 	}
 
 	return " AND lower(am.amname) = lower(" + quoteStringLiteral(strings.TrimSpace(indexType)) + ")"
+}
+
+func renderShowIndexNonUnique(nonUnique string) string {
+	switch strings.TrimSpace(nonUnique) {
+	case "":
+		return ""
+	case "0":
+		return " AND ix.indisunique"
+	case "1":
+		return " AND NOT ix.indisunique"
+	default:
+		return ""
+	}
 }
 
 func renderShowTableStatus(stmt ir.ShowTableStatusStatement, to string) (string, error) {
